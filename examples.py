@@ -1,4 +1,4 @@
-from closest_country import analyze_point_location
+from closest_country import analyze_point_location, find_closest_country_to_point
 from map_fetcher import fetch_world_map
 from visualization import visualize_point_and_closest_countries
 
@@ -113,7 +113,7 @@ def run_comprehensive_demo():
         analysis = analyze_point_location(world_map, (lon, lat))
 
         # Also call find_closest_country_to_point for testing purposes
-        # simple_closest = find_closest_country_to_point(world_map, (lon, lat))
+        find_closest_country_to_point(world_map, (lon, lat))
 
         if analysis["is_inside_country"]:
             print(f"      ✓ Point is INSIDE {analysis['containing_country']}")
