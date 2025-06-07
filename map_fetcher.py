@@ -16,6 +16,19 @@ def fetch_world_map(resolution="low", save_path="world_map.geojson"):
     geopandas.GeoDataFrame: World map data
     """
 
+    # Check if file already exists
+    if os.path.exists(save_path):
+        try:
+            print(f"Map file '{save_path}' already exists. Loading existing file...")
+            world = gpd.read_file(save_path)
+            print(
+                f"Successfully loaded existing map with {len(world)} countries/territories"
+            )
+            return world
+        except Exception as e:
+            print(f"Failed to load existing file: {e}")
+            print("Proceeding to download fresh data...")
+
     # Natural Earth data URLs for different resolutions
     urls = {
         "low": (
