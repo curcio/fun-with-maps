@@ -1,4 +1,5 @@
 import geopandas as gpd
+import pandas as pd
 from shapely.geometry import Polygon
 
 from country_analysis import get_country_info, get_country_polygon

@@ -203,6 +203,8 @@ def analyze_point_location(world_gdf, point):
         "is_inside_country": False,
         "containing_country": None,
         "nearest_countries": [],
+        "top_5_closest": [],
+        "ocean_or_land": "unknown",
     }
 
     # Check if point is inside any country
@@ -227,6 +229,7 @@ def analyze_point_location(world_gdf, point):
                 analysis["containing_country"] = country_name
                 analysis["closest_country"] = country_name
                 analysis["distance_to_closest"] = 0.0
+                analysis["ocean_or_land"] = "land"
                 break
 
         except Exception:
@@ -240,10 +243,11 @@ def analyze_point_location(world_gdf, point):
         if closest_result:
             analysis["closest_country"] = closest_result[0]
             analysis["distance_to_closest"] = closest_result[1]
+        analysis["ocean_or_land"] = "ocean_or_water"
 
-    # Get nearest countries
-    analysis["nearest_countries"] = find_multiple_closest_countries(
-        world_gdf, point, n_countries=5
-    )
+    # Get nearest countries (top 5 closest)
+    nearest_countries = find_multiple_closest_countries(world_gdf, point, n_countries=5)
+    analysis["nearest_countries"] = nearest_countries
+    analysis["top_5_closest"] = nearest_countries
 
     return analysis

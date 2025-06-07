@@ -112,6 +112,9 @@ def run_comprehensive_demo():
         # Get comprehensive analysis
         analysis = analyze_point_location(world_map, (lon, lat))
 
+        # Also call find_closest_country_to_point for testing purposes
+        # simple_closest = find_closest_country_to_point(world_map, (lon, lat))
+
         if analysis["is_inside_country"]:
             print(f"      ✓ Point is INSIDE {analysis['containing_country']}")
         else:
