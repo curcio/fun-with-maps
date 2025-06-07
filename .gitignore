@@ -1,4 +1,5 @@
 # Data files
+*.zip
 *.geojson
 *.shp
 *.dbf

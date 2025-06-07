@@ -1,12 +1,9 @@
 from unittest.mock import patch
 
-import geopandas as gpd
 import pytest
-from shapely.geometry import Point
 
 from closest_country import analyze_point_location, find_closest_country_to_point
 from country_analysis import get_country_info, get_country_polygon
-from map_fetcher import fetch_world_map
 from point_generation import generate_random_points_in_polygon
 from visualization import visualize_country_polygon
 
@@ -60,7 +57,7 @@ class TestWorkflowIntegration:
             # Check coordinate consistency
             assert analysis["coordinates"] == point
 
-    @patch("matplotlib.pyplot.show")
+    @patch("visualization.show_plot")
     def test_visualization_workflow(self, mock_show, mock_world_data):
         """Test workflow that includes visualization."""
         # Get a country

@@ -5,6 +5,9 @@ import geopandas as gpd
 import pytest
 from shapely.geometry import Polygon
 
+# Set environment variable to hide plots during testing
+os.environ["HIDE_PLOTS"] = "1"
+
 
 @pytest.fixture
 def sample_world_map():

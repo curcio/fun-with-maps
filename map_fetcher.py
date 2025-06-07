@@ -35,10 +35,7 @@ def fetch_world_map(resolution="low", save_path="world_map.geojson"):
     # Alternative: Use Natural Earth directly
     # For low resolution (1:110m scale)
     if resolution == "low":
-        url = (
-            "https://www.naturalearthdata.com/http//www.naturalearthdata.com/"
-            "download/110m/cultural/ne_110m_admin_0_countries.zip"
-        )
+        url = "https://naciscdn.org/naturalearth/110m/cultural/ne_110m_admin_0_countries.zip"
     elif resolution == "medium":
         url = (
             "https://www.naturalearthdata.com/http//www.naturalearthdata.com/"

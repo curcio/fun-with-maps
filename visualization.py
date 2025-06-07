@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 
 from closest_country import find_multiple_closest_countries
+from utils import show_plot
 
 
 def visualize_country_polygon(country_gdf, country_name=None, figsize=(10, 8)):
@@ -44,7 +45,7 @@ def visualize_country_polygon(country_gdf, country_name=None, figsize=(10, 8)):
     ax.grid(True, alpha=0.3)
 
     plt.tight_layout()
-    plt.show()
+    show_plot()
 
 
 def visualize_point_and_closest_countries(
@@ -147,7 +148,7 @@ def visualize_point_and_closest_countries(
     ax.set_ylim(lat - buffer, lat + buffer)
 
     plt.tight_layout()
-    plt.show()
+    show_plot()
 
 
 def visualize_polygon_with_points(
@@ -199,7 +200,7 @@ def visualize_polygon_with_points(
     ax.set_facecolor("lightcyan")
 
     plt.tight_layout()
-    plt.show()
+    show_plot()
 
 
 def visualize_world_map(world_gdf, title="World Political Map", figsize=(15, 10)):
@@ -235,4 +236,4 @@ def visualize_world_map(world_gdf, title="World Political Map", figsize=(15, 10)
     ax.set_facecolor("lightcyan")
 
     plt.tight_layout()
-    plt.show()
+    show_plot()

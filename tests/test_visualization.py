@@ -2,7 +2,6 @@ from unittest.mock import MagicMock, patch
 
 import geopandas as gpd
 import matplotlib.pyplot as plt
-import pytest
 from shapely.geometry import Point
 
 from visualization import (
@@ -16,22 +15,22 @@ from visualization import (
 class TestVisualizationFunctions:
     """Test cases for visualization functions."""
 
-    @patch("matplotlib.pyplot.show")
+    @patch("visualization.show_plot")
     def test_visualize_country_polygon_success(self, mock_show, sample_country):
         """Test successful country polygon visualization."""
         # Should not raise any exceptions
         visualize_country_polygon(sample_country, "Test Country")
 
-        # plt.show() should be called
+        # show_plot() should be called
         mock_show.assert_called_once()
 
-    @patch("matplotlib.pyplot.show")
+    @patch("visualization.show_plot")
     def test_visualize_country_polygon_with_name(self, mock_show, sample_country):
         """Test visualization with custom country name."""
         visualize_country_polygon(sample_country, "Custom Name")
         mock_show.assert_called_once()
 
-    @patch("matplotlib.pyplot.show")
+    @patch("visualization.show_plot")
     def test_visualize_country_polygon_without_name(self, mock_show, sample_country):
         """Test visualization without providing country name."""
         visualize_country_polygon(sample_country)
@@ -48,7 +47,7 @@ class TestVisualizationFunctions:
         # Should not raise exceptions
         visualize_country_polygon(empty_gdf)
 
-    @patch("matplotlib.pyplot.show")
+    @patch("visualization.show_plot")
     @patch("visualization.find_multiple_closest_countries")
     def test_visualize_point_and_closest_countries_success(
         self, mock_find_countries, mock_show, sample_world_map
@@ -67,7 +66,7 @@ class TestVisualizationFunctions:
         mock_find_countries.assert_called_once()
         mock_show.assert_called_once()
 
-    @patch("matplotlib.pyplot.show")
+    @patch("visualization.show_plot")
     @patch("visualization.find_multiple_closest_countries")
     def test_visualize_point_and_closest_countries_with_shapely_point(
         self, mock_find_countries, mock_show, sample_world_map
@@ -92,7 +91,7 @@ class TestVisualizationFunctions:
         # Should handle gracefully without raising exceptions
         visualize_point_and_closest_countries(sample_world_map, point)
 
-    @patch("matplotlib.pyplot.show")
+    @patch("visualization.show_plot")
     def test_visualize_polygon_with_points_success(self, mock_show, sample_country):
         """Test successful polygon with points visualization."""
         # Create sample points
@@ -106,7 +105,7 @@ class TestVisualizationFunctions:
 
         mock_show.assert_called_once()
 
-    @patch("matplotlib.pyplot.show")
+    @patch("visualization.show_plot")
     def test_visualize_polygon_with_points_default_title(
         self, mock_show, sample_country
     ):
@@ -127,14 +126,14 @@ class TestVisualizationFunctions:
         """Test with None points input."""
         visualize_polygon_with_points(sample_country, None)
 
-    @patch("matplotlib.pyplot.show")
+    @patch("visualization.show_plot")
     def test_visualize_world_map_success(self, mock_show, sample_world_map):
         """Test successful world map visualization."""
         visualize_world_map(sample_world_map, "Test World Map")
 
         mock_show.assert_called_once()
 
-    @patch("matplotlib.pyplot.show")
+    @patch("visualization.show_plot")
     def test_visualize_world_map_default_title(self, mock_show, sample_world_map):
         """Test world map visualization with default title."""
         visualize_world_map(sample_world_map)
@@ -146,7 +145,7 @@ class TestVisualizationFunctions:
         # Should handle gracefully
         visualize_world_map(None)
 
-    @patch("matplotlib.pyplot.show")
+    @patch("visualization.show_plot")
     def test_visualization_parameters(self, mock_show, sample_country):
         """Test that visualization functions accept different figure sizes."""
         # Test with custom figure size
@@ -165,7 +164,7 @@ class TestVisualizationFunctions:
         final_figs = len(plt.get_fignums())
         assert final_figs >= initial_figs  # Should not create unclosed figures
 
-    @patch("matplotlib.pyplot.show")
+    @patch("visualization.show_plot")
     @patch("matplotlib.pyplot.subplots")
     def test_visualization_matplotlib_integration(
         self, mock_subplots, mock_show, sample_country
