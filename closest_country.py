@@ -1,5 +1,9 @@
+import logging
+
 import numpy as np
 from shapely.geometry import Point
+
+log = logging.getLogger(__name__)
 
 
 def find_closest_country_to_point(
@@ -23,21 +27,25 @@ def find_closest_country_to_point(
     None: If no countries found or error occurred
     """
     if world_gdf is None or world_gdf.empty:
-        print("No world map data provided")
+        log.error("No world map data provided")
         return None
 
     # Convert point to shapely Point if needed
     if isinstance(point, (tuple, list)):
         if len(point) != 2:
-            print("Point must be a tuple/list of (longitude, latitude)")
+            log.error("Point must be a tuple/list of (longitude, latitude)")
             return None
         point_geom = Point(point[0], point[1])
-        print(f"Finding closest country to point: " f"({point[0]:.4f}, {point[1]:.4f})")
+        log.debug(
+            f"Finding closest country to point: " f"({point[0]:.4f}, {point[1]:.4f})"
+        )
     elif hasattr(point, "x") and hasattr(point, "y"):
         point_geom = point
-        print(f"Finding closest country to point: " f"({point.x:.4f}, {point.y:.4f})")
+        log.debug(
+            f"Finding closest country to point: " f"({point.x:.4f}, {point.y:.4f})"
+        )
     else:
-        print("Point must be a tuple (lon, lat) or shapely Point object")
+        log.error("Point must be a tuple (lon, lat) or shapely Point object")
         return None
 
     # Find the name column
@@ -50,7 +58,7 @@ def find_closest_country_to_point(
             break
 
     if name_col is None:
-        print("No name column found in the dataset")
+        log.error("No name column found in the dataset")
         return None
 
     # Limit countries for performance if specified
@@ -68,8 +76,9 @@ def find_closest_country_to_point(
     # Calculate distances to each country's border
     distances = []
     country_names = []
+    containing_country = None
 
-    print(f"Calculating distances to {len(countries_to_check)} countries...")
+    log.debug(f"Calculating distances to {len(countries_to_check)} countries...")
 
     for idx, row in countries_to_check.iterrows():
         try:
@@ -78,8 +87,9 @@ def find_closest_country_to_point(
 
             # Calculate distance to border
             if country_geom.contains(point_geom):
-                # Point is inside the country - distance is 0
-                distance = 0.0
+                # Point is inside the country - skip this country and find closest neighbor
+                containing_country = country_name
+                continue
             else:
                 # Calculate distance to the border (exterior boundary)
                 distance = country_geom.distance(point_geom)
@@ -88,13 +98,13 @@ def find_closest_country_to_point(
             country_names.append(country_name)
 
         except Exception as e:
-            print(
+            log.error(
                 f"Error calculating distance for country {row.get(name_col, 'Unknown')}: {e}"
             )
             continue
 
     if not distances:
-        print("No valid distances calculated")
+        log.error("No valid distances calculated")
         return None
 
     # Find the country with minimum distance
@@ -102,15 +112,17 @@ def find_closest_country_to_point(
     closest_country = country_names[min_distance_idx]
     min_distance = distances[min_distance_idx]
 
-    print(f"Closest country: {closest_country}")
-    print(f"Distance to border: {min_distance:.6f} degrees")
-
-    if min_distance == 0:
-        print("Point is inside the country")
+    if containing_country:
+        log.debug(f"Point is inside: {containing_country}")
+        log.debug(f"Closest neighboring country: {closest_country}")
     else:
-        # Convert distance to approximate kilometers (rough estimate)
-        km_distance = min_distance * 111.32  # 1 degree ≈ 111.32 km at equator
-        print(f"Approximate distance: {km_distance:.2f} km")
+        log.debug(f"Closest country: {closest_country}")
+
+    log.debug(f"Distance to border: {min_distance:.6f} degrees")
+
+    # Convert distance to approximate kilometers (rough estimate)
+    km_distance = min_distance * 111.32  # 1 degree ≈ 111.32 km at equator
+    log.debug(f"Approximate distance: {km_distance:.2f} km")
 
     if return_distance:
         return closest_country, min_distance
@@ -131,7 +143,7 @@ def find_multiple_closest_countries(world_gdf, point, n_countries=5):
     list: List of tuples (country_name, distance) sorted by distance
     """
     if world_gdf is None or world_gdf.empty:
-        print("No world map data provided")
+        log.error("No world map data provided")
         return None
 
     # Convert point to shapely Point if needed
@@ -150,7 +162,7 @@ def find_multiple_closest_countries(world_gdf, point, n_countries=5):
             break
 
     if name_col is None:
-        print("No name column found in the dataset")
+        log.error("No name column found in the dataset")
         return None
 
     # Calculate distances to all countries
