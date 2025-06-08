@@ -237,3 +237,111 @@ def visualize_world_map(world_gdf, title="World Political Map", figsize=(15, 10)
 
     plt.tight_layout()
     show_plot()
+
+
+def create_country_visualization_with_colors(
+    world_gdf, country_polygon, points, unique_countries, country_name, figsize=(15, 12)
+):
+    """
+    Create visualization with color-coded points by closest country.
+
+    Parameters:
+    world_gdf (geopandas.GeoDataFrame): World map data
+    country_polygon (geopandas.GeoDataFrame): Country polygon data
+    points (geopandas.GeoDataFrame): Points data with closest_country column
+    unique_countries (list): List of unique countries
+    country_name (str): Name of the main country
+    figsize (tuple): Figure size
+    """
+    import numpy as np
+
+    # Find name column for world map
+    name_columns = ["NAME", "name", "NAME_EN", "ADMIN", "Country", "country"]
+    name_col = None
+    for col in name_columns:
+        if col in world_gdf.columns:
+            name_col = col
+            break
+
+    # Create the plot
+    fig, ax = plt.subplots(1, 1, figsize=figsize)
+
+    # Plot the main country
+    country_polygon.plot(
+        ax=ax,
+        color="lightblue",
+        edgecolor="navy",
+        linewidth=2,
+        alpha=0.6,
+        label=country_name,
+    )
+
+    # Get unique countries and assign colors
+    if len(unique_countries) <= 10:
+        colors = plt.cm.Set1(np.linspace(0, 1, max(len(unique_countries), 3)))
+    elif len(unique_countries) <= 12:
+        colors = plt.cm.Paired(np.linspace(0, 1, len(unique_countries)))
+    else:
+        colors = plt.cm.tab20(np.linspace(0, 1, len(unique_countries)))
+
+    country_color_map = {
+        country: colors[i] for i, country in enumerate(unique_countries)
+    }
+
+    # Plot closest country polygons with matching colors
+    if name_col:
+        for closest_country in unique_countries:
+            country_mask = world_gdf[name_col].str.contains(
+                closest_country, case=False, na=False
+            )
+            if country_mask.any():
+                closest_country_polygon = world_gdf[country_mask]
+                closest_country_polygon.plot(
+                    ax=ax,
+                    color=country_color_map[closest_country],
+                    edgecolor="black",
+                    linewidth=1,
+                    alpha=0.4,
+                    label=f"{closest_country} (country)",
+                )
+
+    # Plot points colored by closest country
+    for closest_country in unique_countries:
+        country_points = points[points["closest_country"] == closest_country]
+        if not country_points.empty:
+            country_points.plot(
+                ax=ax,
+                color=country_color_map[closest_country],
+                markersize=20,
+                alpha=0.9,
+                label=f"{closest_country} ({len(country_points)} points)",
+                edgecolors="white",
+                linewidth=0.5,
+            )
+
+    # Get bounding box of the original country and add 10% margin
+    bounds = country_polygon.total_bounds
+    minx, miny, maxx, maxy = bounds
+    width = maxx - minx
+    height = maxy - miny
+    margin_x = width * 0.1
+    margin_y = height * 0.1
+
+    # Set plot bounds with margin
+    ax.set_xlim(minx - margin_x, maxx + margin_x)
+    ax.set_ylim(miny - margin_y, maxy + margin_y)
+
+    # Customize the plot
+    ax.set_title(
+        f"{country_name} with Points Colored by Closest Country",
+        fontsize=14,
+        fontweight="bold",
+    )
+    ax.set_xlabel("Longitude")
+    ax.set_ylabel("Latitude")
+    ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
+    ax.grid(True, alpha=0.3)
+    ax.set_facecolor("lightcyan")
+
+    plt.tight_layout()
+    show_plot()
