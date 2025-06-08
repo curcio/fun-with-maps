@@ -87,9 +87,9 @@ def find_closest_country_to_point(
 
             # Calculate distance to border
             if country_geom.contains(point_geom):
-                # Point is inside the country - skip this country and find closest neighbor
+                # Point is inside the country - distance is 0
+                distance = 0.0
                 containing_country = country_name
-                continue
             else:
                 # Calculate distance to the border (exterior boundary)
                 distance = country_geom.distance(point_geom)
