@@ -98,3 +98,38 @@ def get_country_info(country_gdf):
     }
 
     return info
+
+
+def get_available_countries(world_gdf):
+    """
+    Get a list of all available countries from the world map data.
+
+    Parameters:
+    world_gdf (geopandas.GeoDataFrame): World map data
+
+    Returns:
+    list: Sorted list of country names
+    None: If no countries found or error occurred
+    """
+    if world_gdf is None or world_gdf.empty:
+        print("No world map data provided")
+        return None
+
+    # Find the name column
+    name_columns = ["NAME", "name", "NAME_EN", "ADMIN", "Country", "country"]
+    name_col = None
+
+    for col in name_columns:
+        if col in world_gdf.columns:
+            name_col = col
+            break
+
+    if name_col is None:
+        print("No name column found in the dataset")
+        return None
+
+    # Get all unique country names and sort them
+    countries = world_gdf[name_col].dropna().unique().tolist()
+    countries.sort()
+
+    return countries
