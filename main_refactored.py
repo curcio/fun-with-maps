@@ -25,6 +25,7 @@ from map_fetcher import fetch_world_map
 from parallel_processing import choose_processing_method
 from point_generation import generate_random_points_in_polygon
 from tsp_solver import solve_tsp
+from utils import clear_plot_tracker, generate_pdf_report, set_country_info, show_plot
 from visualization import visualize_country_polygon, visualize_polygon_with_points
 from voronoi_analysis import get_admin1_capitals
 from voronoi_visualization import display_voronoi_diagram
@@ -183,7 +184,12 @@ def visualize_tsp_tour(
     # Set equal aspect ratio and tight layout
     ax.set_aspect("equal")
     plt.tight_layout()
-    plt.show()
+
+    # Use enhanced show_plot with description
+    show_plot(
+        title=f"TSP Tour - {country_name}",
+        description=f"Optimal traveling salesman tour through {len(tour)} capital cities using OR-Tools solver. Total distance: {tour_cost:.1f} km",
+    )
 
 
 def print_tour_details(
@@ -198,70 +204,70 @@ def print_tour_details(
         tour_cost: Total cost of the tour
     """
     print(f"\n{'='*50}")
-    print(f"TSP TOUR DETAILS (OR-Tools)")
+    print(f"TSP TOUR DETAILS")
     print(f"{'='*50}")
-    print(f"Total tour distance: {tour_cost:.1f} km")
+    print(f"Total distance: {tour_cost:.1f} km")
     print(f"Number of cities: {len(tour)}")
-    print(f"Average distance per city: {tour_cost/len(tour):.1f} km")
+    print(f"Average distance between cities: {tour_cost/len(tour):.1f} km")
 
     print(f"\nTour sequence:")
     for i, city_idx in enumerate(tour):
-        city_data = capitals_gdf.iloc[city_idx]
-        city_name = city_data.get("NAME", f"City {city_idx}")
-        lon, lat = city_data.geometry.x, city_data.geometry.y
-        print(f"  {i+1:2d}. {city_name:<20} ({lon:8.4f}, {lat:8.4f})")
-
-    # Show return to start
-    if tour:
-        start_city = capitals_gdf.iloc[tour[0]]
-        start_name = start_city.get("NAME", f"City {tour[0]}")
-        print(f"  {len(tour)+1:2d}. {start_name:<20} (return to start)")
+        if city_idx < len(capitals_gdf):
+            city_row = capitals_gdf.iloc[city_idx]
+            city_name = city_row.get("NAME", f"City {city_idx}")
+            print(f"  {i+1:2d}. {city_name}")
 
 
 def solve_tsp_for_country(capitals: gpd.GeoDataFrame, country_name: str = "Argentina"):
     """
-    Solve TSP for capital cities of a country using OR-Tools.
+    Solve Traveling Salesman Problem for capital cities and visualize the result.
 
     Args:
-        capitals: GeoDataFrame with capital cities
-        country_name: Name of the country to analyze
+        capitals: GeoDataFrame containing capital cities
+        country_name: Name of the country for visualization
     """
-    print(f"\nAnalyzing capital cities of {country_name} using OR-Tools")
-    print("=" * 50)
+    print(f"\n{'='*60}")
+    print(f"SOLVING TSP FOR {country_name.upper()} CAPITAL CITIES")
+    print(f"{'='*60}")
 
     try:
         if capitals.empty:
-            print(f"No capital cities found for {country_name}")
+            print(f"❌ No capital cities found for {country_name}")
             return
 
-        print(f"Found {len(capitals)} capital cities:")
+        print(f"Found {len(capitals)} capital cities for {country_name}:")
         for idx, row in capitals.iterrows():
-            city_name = row.get("NAME", "Unknown")
-            lon, lat = row.geometry.x, row.geometry.y
-            print(f"  - {city_name}: ({lon:.4f}, {lat:.4f})")
+            print(f"  - {row.get('NAME', 'Unknown')}")
 
-        # Step 2: Extract coordinates for TSP
+        # Extract coordinates
         coordinates = extract_capital_coordinates(capitals)
+        print(f"\nExtracted {len(coordinates)} coordinates for TSP solving...")
 
-        if len(coordinates) < 2:
-            print(f"Need at least 2 cities for TSP, found {len(coordinates)}")
-            return
+        # Solve TSP
+        print("🔄 Solving TSP using OR-Tools...")
+        tour, tour_cost = solve_tsp(coordinates)
 
-        # Step 3: Solve TSP using OR-Tools
-        print(f"\nSolving TSP for {len(coordinates)} capital cities using OR-Tools...")
-        tour, cost = solve_tsp(coordinates, time_limit=60)  # 60 second limit
+        if tour:
+            print(f"✅ TSP solved successfully!")
+            print(f"   Total distance: {tour_cost:.1f} km")
+            print(f"   Tour length: {len(tour)} cities")
 
-        # Step 4: Print tour details
-        print_tour_details(capitals, tour, cost)
+            # Print tour details
+            print_tour_details(capitals, tour, tour_cost)
 
-        # Step 5: Get country polygon for visualization
-        print(f"\nPreparing visualization...")
-        world_map = fetch_world_map(resolution="low")
-        country_polygon = get_country_polygon(world_map, country_name)
+            # Get country polygon for visualization
+            from country_analysis import get_country_polygon
+            from map_fetcher import fetch_world_map
 
-        # Step 6: Visualize the tour
-        print(f"Creating map visualization...")
-        visualize_tsp_tour(country_polygon, capitals, tour, cost, country_name)
+            print("📊 Creating TSP visualization...")
+            world_map = fetch_world_map(resolution="low")
+            country_polygon = get_country_polygon(world_map, country_name)
+
+            # Visualize the tour
+            visualize_tsp_tour(country_polygon, capitals, tour, tour_cost, country_name)
+
+        else:
+            print("❌ Failed to solve TSP")
 
         print(f"\n✅ OR-Tools TSP analysis completed successfully!")
 
@@ -316,6 +322,7 @@ def generate_and_visualize_points(country_polygon, country_name: str, factor: in
         visualize_polygon_with_points(
             country_polygon, points, f"{country_name} with Random Points"
         )
+
     else:
         print("Failed to generate points")
 
@@ -404,6 +411,7 @@ def create_voronoi_analysis(country_polygon, country_name: str, capitals):
 
             # Create and display Voronoi diagram
             display_voronoi_diagram(country_polygon, capitals, country_name)
+
         else:
             print(f"No capital cities found for {country_name}")
 
@@ -422,8 +430,14 @@ def main():
     min_country_frequency = 10
 
     try:
+        # Clear any previous plot tracking
+        clear_plot_tracker()
+
         # Step 1: Setup country analysis
         world_map, country_polygon = setup_country_analysis(country_name)
+
+        # Initialize country info for plot tracking and PDF generation
+        set_country_info(country_name, country_polygon=country_polygon)
 
         # Step 2: Generate and visualize random points
         points = generate_and_visualize_points(
@@ -451,6 +465,12 @@ def main():
 
         # Step 6: Solve TSP for capital cities
         solve_tsp_for_country(capitals, country_name)
+
+        # Step 7: Generate comprehensive PDF report
+        print(f"\n{'='*60}")
+        print("GENERATING COMPREHENSIVE PDF REPORT")
+        print(f"{'='*60}")
+        generate_pdf_report()
 
     except Exception as e:
         print(f"Error in main analysis: {e}")
