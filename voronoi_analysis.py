@@ -211,245 +211,19 @@ def construct_infinite_voronoi_region(
         if vertex_idx >= 0:
             finite_vertices.append(vor.vertices[vertex_idx])
 
-    generating_point = vor.points[point_idx]
+    result = Polygon(finite_vertices)
+    from shapely.geometry.multipolygon import MultiPolygon
 
-    if not finite_vertices:
-        # If no finite vertices, create a circular region around the point
-        bounds = country_geom.bounds
-        radius = min(bounds[2] - bounds[0], bounds[3] - bounds[1]) / 6
-        circle = Point(generating_point).buffer(radius)
-        result = circle.intersection(country_geom)
-        return result if not result.is_empty else None
+    print(type(country_geom))
+    for polygon in country_geom.geoms:
+        if polygon.exterior.contains(finite_vertices[0]):
+            break
 
-    # CRITICAL CHECK: Ensure generating point can be inside final polygon
-    # For infinite regions, we need to extend in directions that keep the generating point included
+    print(polygon)
 
-    # Find infinite ridges for this point
-    infinite_ridges = []
-    for ridge_idx, (p1, p2) in enumerate(vor.ridge_points):
-        if p1 == point_idx or p2 == point_idx:
-            ridge_vertices = vor.ridge_vertices[ridge_idx]
-            if -1 in ridge_vertices:
-                other_point_idx = p2 if p1 == point_idx else p1
-                infinite_ridges.append((ridge_idx, other_point_idx, ridge_vertices))
+    exit(0)
 
-    if not infinite_ridges:
-        # No infinite ridges - this shouldn't happen for infinite regions
-        # Fallback to finite polygon
-        if len(finite_vertices) >= 3:
-            try:
-                poly = Polygon(finite_vertices)
-                if poly.is_valid:
-                    return poly.intersection(country_geom)
-            except Exception:
-                pass
-        return None
-
-    # Start with a conservative approach: create a large polygon that definitely contains the point
-    # then intersect with proper Voronoi boundaries
-
-    # Method 1: Create a polygon from finite vertices + extended boundary points
-    extended_vertices = list(finite_vertices)
-
-    # For each infinite ridge, extend properly using correct Voronoi geometry
-    for ridge_idx, other_point_idx, ridge_vertices in infinite_ridges:
-        # Get the finite vertex
-        finite_vertex = None
-        for rv in ridge_vertices:
-            if rv >= 0:
-                finite_vertex = vor.vertices[rv]
-                break
-
-        if finite_vertex is not None:
-            center = vor.points[point_idx]
-            other_center = vor.points[other_point_idx]
-
-            # The infinite ray direction: perpendicular to the perpendicular bisector
-            # of the line segment connecting the two generating points
-            bisector_direction = center - other_center
-            bisector_direction = bisector_direction / np.linalg.norm(bisector_direction)
-
-            # The Voronoi edge is perpendicular to the bisector direction
-            edge_direction = np.array([-bisector_direction[1], bisector_direction[0]])
-
-            # Determine which direction to extend (there are two possibilities)
-            # We want the direction that keeps our generating point on the correct side
-            test_point1 = finite_vertex + edge_direction * 0.1
-            test_point2 = finite_vertex - edge_direction * 0.1
-
-            # Check which test point is further from the other generating point
-            dist1 = np.linalg.norm(test_point1 - other_center)
-            dist2 = np.linalg.norm(test_point2 - other_center)
-
-            # Choose the direction that moves away from the other point
-            if dist1 > dist2:
-                ray_direction = edge_direction
-            else:
-                ray_direction = -edge_direction
-
-            # MUCH MORE CONSERVATIVE extension - limit to reasonable distance
-            # Use distance to closest other point as a guide
-            min_distance_to_other = float("inf")
-            for k, other_point in enumerate(vor.points):
-                if k != point_idx:
-                    dist = np.linalg.norm(generating_point - other_point)
-                    min_distance_to_other = min(min_distance_to_other, dist)
-
-            # Extend only a fraction of the distance to nearest neighbor
-            conservative_extension = (
-                min_distance_to_other * 0.5
-            )  # Even more conservative
-
-            # Also limit by country bounds
-            bounds = country_geom.bounds
-            max_country_dimension = max(bounds[2] - bounds[0], bounds[3] - bounds[1])
-            conservative_extension = min(
-                conservative_extension, max_country_dimension * 0.2
-            )
-
-            # Create conservative ray
-            ray_end = finite_vertex + ray_direction * conservative_extension
-
-            # Check if extension stays within country boundary (approximately)
-            ray_point = Point(ray_end)
-            if (
-                country_geom.contains(ray_point)
-                or country_geom.distance(ray_point) < conservative_extension * 0.2
-            ):
-                extended_vertices.append(ray_end)
-            else:
-                # If ray goes too far outside, find intersection with country boundary instead
-                ray_line = LineString([finite_vertex, ray_end])
-                country_intersection = ray_line.intersection(country_geom.boundary)
-                if not country_intersection.is_empty:
-                    if hasattr(country_intersection, "coords"):
-                        coords = list(country_intersection.coords)
-                        if coords:
-                            extended_vertices.append(np.array(coords[0]))
-                    elif hasattr(country_intersection, "geoms"):
-                        # Take the first valid intersection
-                        for geom in country_intersection.geoms:
-                            if hasattr(geom, "coords"):
-                                coords = list(geom.coords)
-                                if coords:
-                                    extended_vertices.append(np.array(coords[0]))
-                                    break
-
-    # CONSERVATIVE APPROACH: Only add bbox corners if really necessary and far from other points
-    bbox_corners = [
-        np.array([bbox.bounds[0], bbox.bounds[1]]),  # bottom-left
-        np.array([bbox.bounds[2], bbox.bounds[1]]),  # bottom-right
-        np.array([bbox.bounds[2], bbox.bounds[3]]),  # top-right
-        np.array([bbox.bounds[0], bbox.bounds[3]]),  # top-left
-    ]
-
-    for corner in bbox_corners:
-        # Much more restrictive corner inclusion
-        distances_to_points = [
-            np.linalg.norm(corner - vor.points[i]) for i in range(len(vor.points))
-        ]
-        closest_point_idx = np.argmin(distances_to_points)
-        closest_distance = distances_to_points[closest_point_idx]
-
-        # Only include corner if:
-        # 1. It's closest to our point
-        # 2. It's significantly closer to our point than to any other point
-        # 3. It's within the country boundary or very close to it
-        if (
-            closest_point_idx == point_idx
-            and closest_distance < min(distances_to_points) * 1.5
-            and (  # Much closer than alternatives
-                country_geom.contains(Point(corner))
-                or country_geom.distance(Point(corner)) < closest_distance * 0.3
-            )
-        ):
-            extended_vertices.append(corner)
-
-    # Construct the polygon and VALIDATE that it contains the generating point
-    if len(extended_vertices) >= 3:
-        try:
-            # Remove duplicates
-            unique_vertices = []
-            for v in extended_vertices:
-                is_duplicate = False
-                for uv in unique_vertices:
-                    if np.linalg.norm(v - uv) < 1e-8:
-                        is_duplicate = True
-                        break
-                if not is_duplicate:
-                    unique_vertices.append(v)
-
-            if len(unique_vertices) >= 3:
-                # Sort vertices counter-clockwise
-                centroid = np.mean(unique_vertices, axis=0)
-                angles = [
-                    np.arctan2(v[1] - centroid[1], v[0] - centroid[0])
-                    for v in unique_vertices
-                ]
-                sorted_indices = np.argsort(angles)
-                sorted_vertices = [unique_vertices[i] for i in sorted_indices]
-
-                # Create polygon
-                region_polygon = Polygon(sorted_vertices)
-
-                # CRITICAL VALIDATION: Check if generating point is inside
-                if region_polygon.is_valid and not region_polygon.is_empty:
-                    point_geom = Point(generating_point)
-
-                    if not region_polygon.contains(point_geom):
-                        # If point is not inside, expand the polygon to include it
-                        print(
-                            f"Warning: Expanding region for point {point_idx} to include generating point"
-                        )
-
-                        # Method: buffer the point and union with the polygon
-                        point_buffer = point_geom.buffer(
-                            0.1
-                        )  # Small buffer around point
-                        region_polygon = unary_union([region_polygon, point_buffer])
-
-                        # If still not working, create a larger region around the point
-                        if not region_polygon.contains(point_geom):
-                            bounds = country_geom.bounds
-                            radius = (
-                                min(bounds[2] - bounds[0], bounds[3] - bounds[1]) / 10
-                            )
-                            region_polygon = point_geom.buffer(radius)
-
-                    # Final intersection with country geometry
-                    result = region_polygon.intersection(country_geom)
-
-                    # Final validation
-                    if not result.is_empty and result.contains(point_geom):
-                        return result
-                    else:
-                        # Last resort: create a small buffer around the point
-                        # Use distance to nearest neighbor as guide for radius
-                        min_distance_to_other = float("inf")
-                        for k, other_point in enumerate(vor.points):
-                            if k != point_idx:
-                                dist = np.linalg.norm(generating_point - other_point)
-                                min_distance_to_other = min(min_distance_to_other, dist)
-
-                        radius = min_distance_to_other * 0.3  # Much smaller fallback
-                        fallback = point_geom.buffer(radius).intersection(country_geom)
-                        return fallback if not fallback.is_empty else None
-
-        except Exception as e:
-            print(f"Error constructing infinite region for point {point_idx}: {e}")
-
-    # Final fallback: very small region guaranteed to contain the generating point
-    # Use distance to nearest neighbor to avoid overlaps
-    min_distance_to_other = float("inf")
-    for k, other_point in enumerate(vor.points):
-        if k != point_idx:
-            dist = np.linalg.norm(generating_point - other_point)
-            min_distance_to_other = min(min_distance_to_other, dist)
-
-    radius = min_distance_to_other * 0.25  # Very conservative fallback
-    circle = Point(generating_point).buffer(radius)
-    result = circle.intersection(country_geom)
-    return result if not result.is_empty else None
+    return result
 
 
 def create_voronoi_from_capitals(
@@ -470,6 +244,43 @@ def create_voronoi_from_capitals(
         return None, None, None
 
     points = extract_voronoi_points(capitals_gdf)
+
+    # Handle geometry type
+    if hasattr(country_polygon, "geometry"):
+        country_geom = country_polygon.geometry.iloc[0]
+    else:
+        country_geom = country_polygon
+
+    # determine bounding box of the country polygon
+    minx, miny, maxx, maxy = country_geom.bounds
+
+    # Calculate the width and height of the original bounding box
+    width = maxx - minx
+    height = maxy - miny
+
+    # Expand the bounding box by 3 times the original size on each side
+    expanded_minx = minx - 3 * width
+    expanded_maxx = maxx + 3 * width
+    expanded_miny = miny - 3 * height
+    expanded_maxy = maxy + 3 * height
+
+    bbox = Polygon(
+        [
+            (expanded_minx, expanded_miny),
+            (expanded_maxx, expanded_miny),
+            (expanded_maxx, expanded_maxy),
+            (expanded_minx, expanded_maxy),
+        ]
+    )
+
+    # create 16 auxiliary points on the bounding box
+    aux_points = []
+    for i in range(4):
+        aux_points.append(bbox.exterior.coords[i])
+
+    # add aux points to the points
+    points = np.concatenate([points, aux_points])
+
     if points is None or len(points) < 3:
         print(
             f"Need at least 3 capitals for Voronoi diagram, found {len(points) if points is not None else 0}"
@@ -477,12 +288,6 @@ def create_voronoi_from_capitals(
         return None, None, None
 
     print(f"Creating Voronoi diagram from {len(points)} capitals...")
-
-    # Handle geometry type
-    if hasattr(country_polygon, "geometry"):
-        country_geom = country_polygon.geometry.iloc[0]
-    else:
-        country_geom = country_polygon
 
     # Create Voronoi diagram and process regions
     vor = Voronoi(points)
@@ -496,11 +301,7 @@ def create_voronoi_from_capitals(
             print("Empty region")
             voronoi_polygons.append(None)
         elif -1 in region:
-            # Handle infinite regions properly
-            infinite_region = construct_infinite_voronoi_region(
-                vor, i, region, bbox, country_geom
-            )
-            voronoi_polygons.append(infinite_region)
+            pass
         else:
             # Finite region
             vertices = [vor.vertices[j] for j in region]
