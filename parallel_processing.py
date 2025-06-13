@@ -285,10 +285,10 @@ def choose_processing_method(
     print(f"Processing {num_points} points...")
 
     if num_points < 50:
-        return find_closest_countries_sequential(world_map, points)
+        return find_closest_countries_parallel(world_map, points)
     elif num_points < 500:
         print("Using threaded processing (medium dataset)...")
-        return find_closest_countries_threaded(world_map, points)
+        return find_closest_countries_parallel(world_map, points)
     else:
         print("Using parallel processing (large dataset)...")
         return find_closest_countries_parallel(world_map, points)
