@@ -6,9 +6,48 @@ from scipy.spatial import Voronoi
 from shapely.geometry import Point, Polygon
 
 
+def download_populated_places_data(zip_path: str, data_url: str) -> bool:
+    """
+    Download the Natural Earth populated places dataset.
+    
+    Args:
+        zip_path: Path where to save the zip file
+        data_url: URL to download the data from
+        
+    Returns:
+        bool: True if download successful, False otherwise
+    """
+    import os
+    import requests
+    
+    try:
+        print(f"Downloading populated places data from Natural Earth...")
+        print(f"URL: {data_url}")
+        
+        # Create data directory if it doesn't exist
+        os.makedirs(os.path.dirname(zip_path), exist_ok=True)
+        
+        # Download the file
+        response = requests.get(data_url, stream=True)
+        response.raise_for_status()
+        
+        # Save the file
+        with open(zip_path, 'wb') as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
+        
+        print(f"Successfully downloaded: {zip_path}")
+        return True
+        
+    except Exception as e:
+        print(f"Error downloading data: {e}")
+        return False
+
+
 def get_admin1_capitals(country_name: str) -> gpd.GeoDataFrame:
     """
     Get admin-1 capital cities for a given country.
+    Automatically downloads the data if it's missing.
 
     Args:
         country_name: Name of the country to filter by
@@ -22,20 +61,34 @@ def get_admin1_capitals(country_name: str) -> gpd.GeoDataFrame:
     data_path = "data/ne_10m_populated_places"
     shp_path = f"{data_path}/ne_10m_populated_places.shp"
     zip_path = f"{data_path}.zip"
+    data_url = "https://naciscdn.org/naturalearth/10m/cultural/ne_10m_populated_places.zip"
 
     # Extract data if needed
     if not os.path.exists(shp_path):
         if os.path.exists(zip_path):
+            print("Extracting populated places data...")
             with zipfile.ZipFile(zip_path, "r") as zip_ref:
                 zip_ref.extractall(data_path)
         else:
-            raise FileNotFoundError(f"Data file '{zip_path}' not found")
+            # Try to download the data automatically
+            print("Populated places data not found. Attempting to download...")
+            if download_populated_places_data(zip_path, data_url):
+                print("Extracting downloaded data...")
+                with zipfile.ZipFile(zip_path, "r") as zip_ref:
+                    zip_ref.extractall(data_path)
+            else:
+                raise FileNotFoundError(
+                    f"Could not download data from {data_url}. "
+                    f"Please manually download the file and place it at {zip_path}"
+                )
 
     # Read and filter data
+    print(f"Loading populated places data for {country_name}...")
     gdf = gpd.read_file(shp_path)
     filtered_gdf = gdf[gdf["ADM0NAME"] == country_name]
     admin1_capitals = filtered_gdf[filtered_gdf["FEATURECLA"] == "Admin-1 capital"]
 
+    print(f"Found {len(admin1_capitals)} admin-1 capitals for {country_name}")
     return admin1_capitals
 
 
