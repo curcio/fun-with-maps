@@ -32,6 +32,7 @@ from utils import clear_plot_tracker, generate_pdf_report, set_country_info, sho
 from visualization import visualize_country_polygon, visualize_polygon_with_points
 from voronoi_analysis import get_admin1_capitals
 from voronoi_visualization import display_voronoi_diagram
+from shapely.geometry import Point
 
 matplotlib.rcParams["figure.max_open_warning"] = 50
 
@@ -76,13 +77,10 @@ def visualize_tsp_tour(
     """
     fig, ax = plt.subplots(1, 1, figsize=(12, 10))
 
-    # Plot country polygon
-    if hasattr(country_polygon, "plot"):
-        country_polygon.plot(ax=ax, color="lightblue", alpha=0.7, edgecolor="navy")
-    else:
-        # If it's a shapely geometry, create a GeoDataFrame
-        gdf_temp = gpd.GeoDataFrame([1], geometry=[country_polygon])
-        gdf_temp.plot(ax=ax, color="lightblue", alpha=0.7, edgecolor="navy")
+    # Plot only the largest polygon (main landmass)
+    largest_polygon = get_largest_polygon(country_polygon)
+    gdf_largest = gpd.GeoDataFrame([1], geometry=[largest_polygon])
+    gdf_largest.plot(ax=ax, color="lightblue", alpha=0.7, edgecolor="navy")
 
     # Get coordinates for plotting
     coordinates = extract_capital_coordinates(capitals_gdf)
@@ -175,7 +173,7 @@ def visualize_tsp_tour(
 
     # Formatting
     ax.set_title(
-        f"TSP Tour of Capital Cities in {country_name} (OR-Tools)\nTotal Distance: {tour_cost:.1f} km",
+        f"TSP Tour of Capital Cities in {country_name} (OR-Tools)\nTotal Distance: {tour_cost:.1f} km\n(Showing largest polygon only)",
         fontsize=14,
         fontweight="bold",
     )
@@ -221,16 +219,68 @@ def print_tour_details(
             print(f"  {i+1:2d}. {city_name}")
 
 
+def filter_capitals_to_largest_polygon(capitals_gdf: gpd.GeoDataFrame, country_polygon) -> gpd.GeoDataFrame:
+    """
+    Filter capital cities to only those that lie within the largest polygon of the country.
+    
+    This is useful for countries with multiple polygons (main land + islands) where
+    we want to focus TSP analysis on the main landmass.
+    
+    Args:
+        capitals_gdf: GeoDataFrame containing capital cities
+        country_polygon: Country polygon (could be single polygon or multipolygon)
+        
+    Returns:
+        GeoDataFrame containing only capitals on the largest polygon
+    """
+    if capitals_gdf.empty:
+        return capitals_gdf
+    
+    # Get the geometry
+    if hasattr(country_polygon, 'geometry'):
+        geometry = country_polygon.geometry.iloc[0]
+    else:
+        geometry = country_polygon
+    
+    # If it's a single polygon, no filtering needed
+    if hasattr(geometry, 'geoms'):
+        # It's a MultiPolygon - find the largest one
+        polygons = list(geometry.geoms)
+        largest_polygon = max(polygons, key=lambda p: p.area)
+        
+        print(f"Country has {len(polygons)} polygons. Filtering capitals to largest polygon (area: {largest_polygon.area:.6f})")
+        
+        # Filter capitals to only those in the largest polygon
+        filtered_capitals = []
+        for idx, row in capitals_gdf.iterrows():
+            capital_point = Point(row.geometry.x, row.geometry.y)
+            if largest_polygon.contains(capital_point) or largest_polygon.touches(capital_point):
+                filtered_capitals.append(row)
+        
+        if filtered_capitals:
+            filtered_gdf = gpd.GeoDataFrame(filtered_capitals, crs=capitals_gdf.crs)
+            print(f"Filtered from {len(capitals_gdf)} to {len(filtered_gdf)} capitals on largest polygon")
+            return filtered_gdf
+        else:
+            print("No capitals found on the largest polygon!")
+            return gpd.GeoDataFrame(columns=capitals_gdf.columns, crs=capitals_gdf.crs)
+    else:
+        # Single polygon - no filtering needed
+        print("Country is a single polygon - no filtering needed")
+        return capitals_gdf
+
+
 def solve_tsp_for_country(capitals: gpd.GeoDataFrame, country_name: str = "Argentina"):
     """
     Solve Traveling Salesman Problem for capital cities and visualize the result.
 
     Args:
-        capitals: GeoDataFrame containing capital cities
+        capitals: GeoDataFrame containing capital cities (possibly filtered to largest polygon)
         country_name: Name of the country for visualization
     """
     print(f"\n{'='*60}")
     print(f"SOLVING TSP FOR {country_name.upper()} CAPITAL CITIES")
+    print(f"(Capitals may be filtered to the largest polygon for multi-polygon countries)")
     print(f"{'='*60}")
 
     try:
@@ -264,7 +314,7 @@ def solve_tsp_for_country(capitals: gpd.GeoDataFrame, country_name: str = "Argen
 
             print("📊 Creating TSP visualization...")
             world_map = fetch_world_map(resolution="low")
-            country_polygon = get_country_polygon(world_map, country_name)
+            country_polygon, country_name = get_country_polygon(world_map, country_name)
 
             # Visualize the tour
             visualize_tsp_tour(country_polygon, capitals, tour, tour_cost, country_name)
@@ -295,12 +345,12 @@ def setup_country_analysis(country_name: str):
     world_map = fetch_world_map(resolution="low")
 
     print(f"Getting {country_name} polygon...")
-    country_polygon = get_country_polygon(world_map, country_name)
+    country_polygon, country_name = get_country_polygon(world_map, country_name)
 
     print(f"Visualizing {country_name}...")
     visualize_country_polygon(country_polygon, country_name)
 
-    return world_map, country_polygon
+    return world_map, country_polygon, country_name
 
 
 def generate_and_visualize_points(country_polygon, country_name: str, factor: int = 10):
@@ -462,7 +512,7 @@ def voronoi_only_analysis(country_name: str = None):
         print("Fetching world map...")
         world_map = fetch_world_map(resolution="low")
         print(f"Getting {country_name} polygon...")
-        country_polygon = get_country_polygon(world_map, country_name)
+        country_polygon, country_name = get_country_polygon(world_map, country_name)
 
         # Initialize country info for plot tracking
         set_country_info(country_name, country_polygon=country_polygon)
@@ -478,6 +528,32 @@ def voronoi_only_analysis(country_name: str = None):
         import traceback
 
         traceback.print_exc()
+
+
+def get_largest_polygon(country_polygon):
+    """
+    Extract the largest polygon from a country polygon (useful for countries with multiple polygons).
+    
+    Args:
+        country_polygon: Country polygon (could be single polygon or multipolygon)
+        
+    Returns:
+        The largest polygon geometry
+    """
+    # Get the geometry
+    if hasattr(country_polygon, 'geometry'):
+        geometry = country_polygon.geometry.iloc[0]
+    else:
+        geometry = country_polygon
+    
+    # If it's a MultiPolygon, return the largest one
+    if hasattr(geometry, 'geoms'):
+        polygons = list(geometry.geoms)
+        largest_polygon = max(polygons, key=lambda p: p.area)
+        return largest_polygon
+    else:
+        # Single polygon - return as is
+        return geometry
 
 
 def main(country_name: str = None):
@@ -518,7 +594,7 @@ def main(country_name: str = None):
         clear_plot_tracker()
 
         # Step 1: Setup country analysis
-        world_map, country_polygon = setup_country_analysis(country_name)
+        world_map, country_polygon, country_name = setup_country_analysis(country_name)
 
         # Initialize country info for plot tracking and PDF generation
         set_country_info(country_name, country_polygon=country_polygon)
@@ -547,8 +623,9 @@ def main(country_name: str = None):
         # Step 5: Create Voronoi analysis
         create_voronoi_analysis(country_polygon, country_name, capitals)
 
-        # Step 6: Solve TSP for capital cities
-        solve_tsp_for_country(capitals, country_name)
+        # Step 6: Solve TSP for capital cities (filtered to largest polygon only)
+        capitals_filtered = filter_capitals_to_largest_polygon(capitals, country_polygon)
+        solve_tsp_for_country(capitals_filtered, country_name)
 
         # Step 7: Generate comprehensive PDF report
         print(f"\n{'='*60}")
