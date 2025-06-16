@@ -8,7 +8,7 @@ from matplotlib.patches import Patch
 from shapely.geometry import LineString, Polygon
 
 from utils import show_plot
-from voronoi_analysis import create_voronoi_from_capitals
+from voronoi_analysis import VoronoiAnalyzer
 
 
 def get_color_palette(num_colors: int) -> List:
@@ -218,8 +218,9 @@ def visualize_voronoi_with_capitals(
     """
     print(f"Creating Voronoi visualization for {country_name}...")
 
-    # Create Voronoi diagram
-    vor, voronoi_polygons, capital_points = create_voronoi_from_capitals(
+    # Create Voronoi diagram using the analyzer class
+    analyzer = VoronoiAnalyzer()
+    vor, voronoi_polygons, capital_points = analyzer.create_voronoi_from_capitals(
         capitals_gdf, country_polygon
     )
 
@@ -255,17 +256,12 @@ def display_voronoi_diagram(
     country_polygon, capitals_gdf: gpd.GeoDataFrame, country_name: str
 ):
     """Create and display Voronoi diagram visualization."""
+
     fig, ax = visualize_voronoi_with_capitals(
         country_polygon, capitals_gdf, country_name
     )
     if fig is not None:
         # Check if plots should be hidden
-        if not os.environ.get("HIDE_PLOTS", "").lower() in ["1", "true", "yes"]:
-            show_plot()
-        else:
-            print(
-                f"Plot created for {country_name} but display is hidden (HIDE_PLOTS=1)"
-            )
-            plt.close(fig)  # Close to free memory
+        show_plot()
     else:
         print("Failed to create Voronoi visualization")

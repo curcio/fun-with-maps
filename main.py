@@ -425,6 +425,61 @@ def create_voronoi_analysis(country_polygon, country_name: str, capitals):
         traceback.print_exc()
 
 
+def voronoi_only_analysis(country_name: str = None):
+    """Run only Voronoi analysis for the specified country.
+
+    Args:
+        country_name: Name of the country to analyze. If None, will show selector.
+    """
+    # Handle country selection
+    if country_name is None:
+        print("No country specified. Loading world map to show country selector...")
+        world_map_temp = fetch_world_map(resolution="low")
+        if world_map_temp is None:
+            print("❌ Failed to load world map. Cannot show country selector.")
+            return
+
+        available_countries = get_available_countries(world_map_temp)
+        if not available_countries:
+            print("❌ No countries found in world map data.")
+            return
+
+        country_name = show_country_selector(
+            available_countries, title="Fun with Maps - Voronoi Analysis"
+        )
+
+        if not country_name:
+            print("No country selected. Exiting.")
+            return
+
+    print(f"🗺️  Voronoi Analysis for: {country_name}")
+
+    try:
+        # Clear any previous plot tracking
+        clear_plot_tracker()
+
+        # Step 1: Setup country analysis (minimal - just get country polygon)
+        print("Fetching world map...")
+        world_map = fetch_world_map(resolution="low")
+        print(f"Getting {country_name} polygon...")
+        country_polygon = get_country_polygon(world_map, country_name)
+
+        # Initialize country info for plot tracking
+        set_country_info(country_name, country_polygon=country_polygon)
+
+        # Step 2: Get capitals and create Voronoi analysis
+        capitals = get_admin1_capitals(country_name)
+        create_voronoi_analysis(country_polygon, country_name, capitals)
+
+        print(f"\n✅ Voronoi analysis completed for {country_name}")
+
+    except Exception as e:
+        print(f"Error in Voronoi analysis: {e}")
+        import traceback
+
+        traceback.print_exc()
+
+
 def main(country_name: str = None):
     """Main function orchestrating the entire analysis.
 
@@ -515,8 +570,10 @@ if __name__ == "__main__":
         epilog="""
 Examples:
   python main.py                          # Show country selector GUI
-  python main.py --country Argentina      # Analyze Argentina
-  python main.py --country "United States" # Analyze United States
+  python main.py --country Argentina      # Full analysis for Argentina
+  python main.py --country "United States" # Full analysis for United States
+  python main.py --only-voronoi           # Voronoi-only analysis with country selector
+  python main.py --country Argentina --only-voronoi  # Voronoi-only analysis for Argentina
         """,
     )
     parser.add_argument(
@@ -524,8 +581,16 @@ Examples:
         type=str,
         help="Name of the country to analyze (if not provided, a GUI selector will appear)",
     )
+    parser.add_argument(
+        "--only-voronoi",
+        action="store_true",
+        help="Run only Voronoi analysis (skip random points, closest countries, TSP, and PDF generation)",
+    )
 
     args = parser.parse_args()
 
-    # Pass the country argument to main function
-    main(country_name=args.country)
+    # Choose which analysis to run based on flags
+    if args.only_voronoi:
+        voronoi_only_analysis(country_name=args.country)
+    else:
+        main(country_name=args.country)
