@@ -315,7 +315,7 @@ def generate_and_visualize_points(country_polygon, country_name: str, factor: in
     Returns:
         GeoDataFrame of generated points
     """
-    k = calculate_point_count(country_polygon, factor)
+    k = calculate_point_count(country_polygon, factor, min_points=1000)
 
     print(f"Generating {k} random points inside {country_name}...")
     points = generate_random_points_in_polygon(country_polygon, k)
