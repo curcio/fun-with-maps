@@ -6,10 +6,12 @@ CLI application for geographic data operations.
 import csv
 import sys
 from io import StringIO
+import os
 
 import click
 
-from voronoi_analysis import get_admin1_capitals
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from fun_with_maps.analysis.voronoi_analysis import get_admin1_capitals
 
 
 @click.group()

@@ -1,7 +1,7 @@
 import geopandas as gpd
 from shapely.geometry import Point
 
-from closest_country import (
+from fun_with_maps.core.closest_country import (
     analyze_point_location,
     find_closest_country_to_point,
     find_multiple_closest_countries,

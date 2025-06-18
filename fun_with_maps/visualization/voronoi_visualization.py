@@ -8,8 +8,8 @@ import requests
 from matplotlib.patches import Patch
 from shapely.geometry import LineString, Polygon
 
-from utils import show_plot
-from voronoi_analysis import VoronoiAnalyzer
+from ..utils.utils import show_plot
+from ..analysis.voronoi_analysis import VoronoiAnalyzer
 
 
 def get_color_palette(num_colors: int) -> List:

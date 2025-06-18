@@ -1,0 +1,105 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "setuptools_scm>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fun-with-maps"
+description = "A comprehensive geospatial analysis toolkit for working with world maps"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "Fun with Maps Team"},
+]
+keywords = ["gis", "geography", "maps", "geospatial", "voronoi", "tsp"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: GIS",
+    "Topic :: Scientific/Engineering :: Visualization",
+]
+dependencies = [
+    "geopandas>=0.12.0",
+    "matplotlib>=3.5.0",
+    "requests>=2.28.0",
+    "shapely>=1.8.0",
+    "numpy>=1.21.0",
+    "pandas>=1.4.0",
+    "fiona>=1.8.0",
+    "pyproj>=3.3.0",
+    "click>=8.0.0",
+    "pygame>=2.0.0",
+    "ortools>=9.0.0",
+    "scipy==1.15.3",
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "pre-commit>=3.6.0",
+    "black>=23.12.0",
+    "isort>=5.13.0",
+    "flake8>=7.0.0",
+    "flake8-unused-arguments>=0.0.13",
+    "flake8-import-order>=0.18.2",
+]
+
+[project.scripts]
+fun-with-maps = "scripts.main:main"
+fun-with-maps-cli = "scripts.cli:cli"
+
+[project.urls]
+Homepage = "https://github.com/your-username/fun-with-maps"
+Repository = "https://github.com/your-username/fun-with-maps"
+Issues = "https://github.com/your-username/fun-with-maps/issues"
+
+[tool.setuptools]
+packages = ["fun_with_maps"]
+
+[tool.setuptools_scm]
+write_to = "fun_with_maps/_version.py"
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+  | output
+)/
+'''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+known_first_party = ["fun_with_maps"]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q --strict-markers"
+testpaths = ["tests"]
+markers = [
+    "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+]

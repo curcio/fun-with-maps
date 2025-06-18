@@ -7,7 +7,7 @@ which is specifically designed for vehicle routing and TSP problems.
 
 from typing import List, Optional, Tuple
 
-from tsp_utils import haversine_distance
+from .tsp_utils import haversine_distance
 
 try:
     from ortools.constraint_solver import pywrapcp, routing_enums_pb2

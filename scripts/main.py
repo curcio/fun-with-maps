@@ -15,23 +15,27 @@ import geopandas as gpd
 import matplotlib
 import matplotlib.pyplot as plt
 
-from country_analysis import get_available_countries, get_country_polygon
-from country_selector import show_country_selector
-from data_processing import (
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from fun_with_maps.core.country_analysis import get_available_countries, get_country_polygon
+from fun_with_maps.core.country_selector import show_country_selector
+from fun_with_maps.analysis.data_processing import (
     add_closest_countries_to_points,
     calculate_point_count,
     filter_points_by_country_frequency,
     get_unique_countries_from_list,
     print_country_statistics,
 )
-from map_fetcher import fetch_world_map
-from parallel_processing import choose_processing_method
-from point_generation import generate_random_points_in_polygon
-from tsp_solver import solve_tsp
-from utils import clear_plot_tracker, generate_pdf_report, set_country_info, show_plot
-from visualization import visualize_country_polygon, visualize_polygon_with_points
-from voronoi_analysis import get_admin1_capitals
-from voronoi_visualization import display_voronoi_diagram
+from fun_with_maps.core.map_fetcher import fetch_world_map
+from fun_with_maps.analysis.parallel_processing import choose_processing_method
+from fun_with_maps.core.point_generation import generate_random_points_in_polygon
+from fun_with_maps.analysis.tsp_solver import solve_tsp
+from fun_with_maps.utils.utils import clear_plot_tracker, generate_pdf_report, set_country_info, show_plot
+from fun_with_maps.visualization.visualization import visualize_country_polygon, visualize_polygon_with_points
+from fun_with_maps.analysis.voronoi_analysis import get_admin1_capitals
+from fun_with_maps.visualization.voronoi_visualization import display_voronoi_diagram
 from shapely.geometry import Point
 
 matplotlib.rcParams["figure.max_open_warning"] = 50
@@ -309,15 +313,21 @@ def solve_tsp_for_country(capitals: gpd.GeoDataFrame, country_name: str = "Argen
             print_tour_details(capitals, tour, tour_cost)
 
             # Get country polygon for visualization
-            from country_analysis import get_country_polygon
-            from map_fetcher import fetch_world_map
+            from fun_with_maps.core.country_analysis import get_country_polygon
+            from fun_with_maps.core.map_fetcher import fetch_world_map
 
             print("📊 Creating TSP visualization...")
             world_map = fetch_world_map(resolution="low")
-            country_polygon, country_name = get_country_polygon(world_map, country_name)
+            country_polygon = get_country_polygon(world_map, country_name)
+            
+            if country_polygon is None:
+                raise ValueError(f"Country '{country_name}' not found")
+            
+            # Extract the actual country name from the polygon data
+            actual_country_name = extract_country_name_from_polygon(country_polygon, country_name)
 
             # Visualize the tour
-            visualize_tsp_tour(country_polygon, capitals, tour, tour_cost, country_name)
+            visualize_tsp_tour(country_polygon, capitals, tour, tour_cost, actual_country_name)
 
         else:
             print("❌ Failed to solve TSP")
@@ -329,6 +339,28 @@ def solve_tsp_for_country(capitals: gpd.GeoDataFrame, country_name: str = "Argen
         import traceback
 
         traceback.print_exc()
+
+
+def extract_country_name_from_polygon(country_polygon, fallback_name: str) -> str:
+    """
+    Extract the actual country name from polygon data.
+    
+    Args:
+        country_polygon: Country polygon GeoDataFrame
+        fallback_name: Name to use if extraction fails
+        
+    Returns:
+        str: The extracted country name or fallback name
+    """
+    if country_polygon is None or country_polygon.empty:
+        return fallback_name
+    
+    name_columns = ["NAME", "name", "NAME_EN", "ADMIN", "Country", "country"]
+    for col in name_columns:
+        if col in country_polygon.columns:
+            return country_polygon.iloc[0][col]
+    
+    return fallback_name
 
 
 def setup_country_analysis(country_name: str):
@@ -345,12 +377,18 @@ def setup_country_analysis(country_name: str):
     world_map = fetch_world_map(resolution="low")
 
     print(f"Getting {country_name} polygon...")
-    country_polygon, country_name = get_country_polygon(world_map, country_name)
+    country_polygon = get_country_polygon(world_map, country_name)
+    
+    if country_polygon is None:
+        raise ValueError(f"Country '{country_name}' not found")
+    
+    # Extract the actual country name from the polygon data
+    actual_country_name = extract_country_name_from_polygon(country_polygon, country_name)
 
-    print(f"Visualizing {country_name}...")
-    visualize_country_polygon(country_polygon, country_name)
+    print(f"Visualizing {actual_country_name}...")
+    visualize_country_polygon(country_polygon, actual_country_name)
 
-    return world_map, country_polygon, country_name
+    return world_map, country_polygon, actual_country_name
 
 
 def generate_and_visualize_points(country_polygon, country_name: str, factor: int = 10):
@@ -434,7 +472,7 @@ def create_colored_visualization(
     unique_countries = get_unique_countries_from_list(closest_countries)
 
     # Create colored visualization (using existing visualization module)
-    from visualization import create_country_visualization_with_colors
+    from fun_with_maps.visualization.visualization import create_country_visualization_with_colors
 
     create_country_visualization_with_colors(
         world_map, country_polygon, points, unique_countries, country_name
@@ -512,16 +550,22 @@ def voronoi_only_analysis(country_name: str = None):
         print("Fetching world map...")
         world_map = fetch_world_map(resolution="low")
         print(f"Getting {country_name} polygon...")
-        country_polygon, country_name = get_country_polygon(world_map, country_name)
+        country_polygon = get_country_polygon(world_map, country_name)
+        
+        if country_polygon is None:
+            raise ValueError(f"Country '{country_name}' not found")
+        
+        # Extract the actual country name from the polygon data
+        actual_country_name = extract_country_name_from_polygon(country_polygon, country_name)
 
         # Initialize country info for plot tracking
-        set_country_info(country_name, country_polygon=country_polygon)
+        set_country_info(actual_country_name, country_polygon=country_polygon)
 
         # Step 2: Get capitals and create Voronoi analysis
-        capitals = get_admin1_capitals(country_name)
-        create_voronoi_analysis(country_polygon, country_name, capitals)
+        capitals = get_admin1_capitals(actual_country_name)
+        create_voronoi_analysis(country_polygon, actual_country_name, capitals)
 
-        print(f"\n✅ Voronoi analysis completed for {country_name}")
+        print(f"\n✅ Voronoi analysis completed for {actual_country_name}")
 
     except Exception as e:
         print(f"Error in Voronoi analysis: {e}")

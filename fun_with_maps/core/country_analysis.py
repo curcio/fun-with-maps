@@ -59,7 +59,7 @@ def get_country_polygon(world_gdf, country_name):
         country_data = country_data.iloc[:1]
 
     print(f"Found country: {country_data.iloc[0][name_col]}")
-    return country_data, country_data.iloc[0][name_col]
+    return country_data
 
 
 def get_country_info(country_gdf):

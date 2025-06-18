@@ -1,3 +1,10 @@
+# Generated output files
+output/
+*.pdf
+*.png
+*.jpg
+*.jpeg
+
 # Data files
 *.zip
 *.geojson
@@ -6,6 +13,8 @@
 *.shx
 *.prj
 *.cpg
+data/
+world_map.geojson
 
 # Python cache
 __pycache__/
@@ -53,3 +62,7 @@ Thumbs.db
 env/
 venv/
 ENV/
+
+# Logs and temporary files
+*.log
+files_to_delete.log

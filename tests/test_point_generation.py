@@ -1,7 +1,7 @@
 import geopandas as gpd
 from shapely.geometry import Point, Polygon
 
-from point_generation import generate_random_points_in_polygon
+from fun_with_maps.core.point_generation import generate_random_points_in_polygon
 
 
 class TestGenerateRandomPointsInPolygon:

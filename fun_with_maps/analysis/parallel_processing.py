@@ -5,7 +5,7 @@ from typing import List, Optional, Tuple
 
 import geopandas as gpd
 
-from closest_country import find_closest_country_to_point
+from ..core.closest_country import find_closest_country_to_point
 
 
 def process_points_chunk(args: Tuple) -> List[Tuple[int, Optional[str]]]:

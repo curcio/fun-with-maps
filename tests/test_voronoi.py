@@ -7,10 +7,10 @@ This script focuses specifically on testing the infinite region handling.
 import matplotlib.pyplot as plt
 import numpy as np
 
-from country_analysis import get_country_polygon
-from map_fetcher import fetch_world_map
-from voronoi_analysis import create_voronoi_from_capitals, get_admin1_capitals
-from voronoi_visualization import (
+from fun_with_maps.core.country_analysis import get_country_polygon
+from fun_with_maps.core.map_fetcher import fetch_world_map
+from fun_with_maps.analysis.voronoi_analysis import create_voronoi_from_capitals, get_admin1_capitals
+from fun_with_maps.visualization.voronoi_visualization import (
     display_voronoi_diagram,
     visualize_voronoi_with_capitals,
 )

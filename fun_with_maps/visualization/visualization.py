@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
 from typing import List, Optional, Tuple, Dict, Any
 
-from closest_country import find_multiple_closest_countries
-from utils import show_plot
+from ..core.closest_country import find_multiple_closest_countries
+from ..utils.utils import show_plot
 
 
 class Visualizer:

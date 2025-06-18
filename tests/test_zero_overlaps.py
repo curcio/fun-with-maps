@@ -9,9 +9,9 @@ import numpy as np
 import pytest
 from shapely.geometry import Point
 
-from country_analysis import get_country_polygon
-from map_fetcher import fetch_world_map
-from voronoi_analysis import create_voronoi_from_capitals, get_admin1_capitals
+from fun_with_maps.core.country_analysis import get_country_polygon
+from fun_with_maps.core.map_fetcher import fetch_world_map
+from fun_with_maps.analysis.voronoi_analysis import create_voronoi_from_capitals, get_admin1_capitals
 
 # Set environment to hide plots
 os.environ["HIDE_PLOTS"] = "1"

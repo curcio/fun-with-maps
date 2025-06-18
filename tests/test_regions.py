@@ -3,7 +3,7 @@
 Simple test script to debug specific regions individually.
 """
 
-from utils import debug_individual_region
+from fun_with_maps.utils.utils import debug_individual_region
 
 if __name__ == "__main__":
     print("🔍 Testing individual regions...")

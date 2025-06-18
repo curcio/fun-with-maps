@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, mock_open, patch
 import geopandas as gpd
 import requests
 
-from map_fetcher import fetch_world_map
+from fun_with_maps.core.map_fetcher import fetch_world_map
 
 
 class TestFetchWorldMap:

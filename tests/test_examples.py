@@ -2,15 +2,18 @@ from unittest.mock import patch
 
 import geopandas as gpd
 import pytest
+import sys
+import os
 
-from examples import example_closest_country_analysis, run_comprehensive_demo
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from examples.examples import example_closest_country_analysis, run_comprehensive_demo
 
 
 class TestExampleFunctions:
     """Test cases for example functions."""
 
-    @patch("examples.fetch_world_map")
-    @patch("examples.analyze_point_location")
+    @patch("examples.examples.fetch_world_map")
+    @patch("examples.examples.analyze_point_location")
     def test_example_closest_country_analysis_success(
         self, mock_analyze, mock_fetch, mock_world_data
     ):
@@ -41,7 +44,7 @@ class TestExampleFunctions:
         # Verify that analyze_point_location was called multiple times (for each test point)
         assert mock_analyze.call_count > 0
 
-    @patch("examples.fetch_world_map")
+    @patch("examples.examples.fetch_world_map")
     def test_example_closest_country_analysis_failed_fetch(self, mock_fetch):
         """Test behavior when world map fetch fails."""
         mock_fetch.return_value = None
@@ -51,10 +54,10 @@ class TestExampleFunctions:
 
         mock_fetch.assert_called_once()
 
-    @patch("examples.fetch_world_map")
-    @patch("examples.find_closest_country_to_point")
-    @patch("examples.analyze_point_location")
-    @patch("examples.visualize_point_and_closest_countries")
+    @patch("examples.examples.fetch_world_map")
+    @patch("examples.examples.find_closest_country_to_point")
+    @patch("examples.examples.analyze_point_location")
+    @patch("examples.examples.visualize_point_and_closest_countries")
     def test_run_comprehensive_demo_success(
         self, mock_viz, mock_analyze, mock_find_closest, mock_fetch, mock_world_data
     ):
@@ -88,7 +91,7 @@ class TestExampleFunctions:
         assert mock_analyze.call_count > 0
         mock_viz.assert_called_once()
 
-    @patch("examples.fetch_world_map")
+    @patch("examples.examples.fetch_world_map")
     def test_run_comprehensive_demo_failed_fetch(self, mock_fetch):
         """Test comprehensive demo when world map fetch fails."""
         mock_fetch.return_value = None
@@ -98,9 +101,9 @@ class TestExampleFunctions:
 
         mock_fetch.assert_called_once()
 
-    @patch("examples.fetch_world_map")
-    @patch("examples.find_closest_country_to_point")
-    @patch("examples.analyze_point_location")
+    @patch("examples.examples.fetch_world_map")
+    @patch("examples.examples.find_closest_country_to_point")
+    @patch("examples.examples.analyze_point_location")
     def test_demo_with_realistic_data(
         self, mock_analyze, mock_find_closest, mock_fetch, mock_world_data
     ):
@@ -148,7 +151,7 @@ class TestExampleFunctions:
         assert mock_find_closest.call_count > 0
 
     @patch("builtins.print")
-    @patch("examples.fetch_world_map")
+    @patch("examples.examples.fetch_world_map")
     def test_demo_output_content(self, mock_fetch, mock_print, mock_world_data):
         """Test that demo functions produce expected console output."""
         mock_fetch.return_value = mock_world_data
@@ -177,14 +180,14 @@ class TestExampleFunctions:
     def test_examples_importable(self):
         """Test that example functions can be imported without errors."""
         # This test verifies that the imports work correctly
-        from examples import example_closest_country_analysis, run_comprehensive_demo
+        from examples.examples import example_closest_country_analysis, run_comprehensive_demo
 
         # Verify functions are callable
         assert callable(example_closest_country_analysis)
         assert callable(run_comprehensive_demo)
 
-    @patch("examples.fetch_world_map")
-    @patch("examples.analyze_point_location")
+    @patch("examples.examples.fetch_world_map")
+    @patch("examples.examples.analyze_point_location")
     def test_example_with_edge_cases(self, mock_analyze, mock_fetch):
         """Test example functions with edge case scenarios."""
         # Test with minimal world map
@@ -212,7 +215,7 @@ class TestExampleFunctions:
                     f"Example function should handle exceptions gracefully, but raised unexpected: {e}"
                 )
 
-    @patch("examples.fetch_world_map")
+    @patch("examples.examples.fetch_world_map")
     def test_demo_functions_standalone(self, mock_fetch, mock_world_data):
         """Test that demo functions can run independently."""
         mock_fetch.return_value = mock_world_data

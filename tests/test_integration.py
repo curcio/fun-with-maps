@@ -2,10 +2,10 @@ from unittest.mock import patch
 
 import pytest
 
-from closest_country import analyze_point_location, find_closest_country_to_point
-from country_analysis import get_country_info, get_country_polygon
-from point_generation import generate_random_points_in_polygon
-from visualization import visualize_country_polygon
+from fun_with_maps.core.closest_country import analyze_point_location, find_closest_country_to_point
+from fun_with_maps.core.country_analysis import get_country_info, get_country_polygon
+from fun_with_maps.core.point_generation import generate_random_points_in_polygon
+from fun_with_maps.visualization.visualization import visualize_country_polygon
 
 
 @pytest.mark.integration
@@ -57,7 +57,7 @@ class TestWorkflowIntegration:
             # Check coordinate consistency
             assert analysis["coordinates"] == point
 
-    @patch("visualization.show_plot")
+    @patch("fun_with_maps.visualization.visualization.show_plot")
     def test_visualization_workflow(self, mock_show, mock_world_data):
         """Test workflow that includes visualization."""
         # Get a country
