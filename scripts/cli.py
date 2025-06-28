@@ -111,6 +111,10 @@ def closest_countries_cmd(country, n):
             click.echo("No closest countries found", err=True)
             sys.exit(1)
 
+        # Skip the first result (selected country) if more than n results
+        if len(results) > n:
+            results = results[1:]
+
         filtered = [name for name, _ in results if name.lower() != country.lower()]
         for name in filtered[:n]:
             click.echo(name)

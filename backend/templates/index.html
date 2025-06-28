@@ -1,16 +1,94 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Echo Form</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guess the Country - Fun with Maps</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
-    <h1>Echo Form</h1>
-    <form action="/submit" method="post">
-        <input type="text" name="text" />
-        <button type="submit">Submit</button>
-    </form>
-    {% if submitted %}
-    <p>You submitted: {{ submitted }}</p>
-    {% endif %}
+    <div class="container">
+        <header>
+            <h1>🗺️ Guess the Country</h1>
+            <p class="subtitle">Test your geographical knowledge!</p>
+        </header>
+
+        <main>
+            <div id="game-interface" class="game-section">
+                <div class="question-mark">
+                    <i class="fas fa-question-circle"></i>
+                </div>
+
+                <h2>Guess the Country</h2>
+
+                <div class="image-section">
+                    <div id="country-image" class="image-container hidden">
+                        {% if image_path %}
+                        <img src="{{ image_path }}" alt="{{ country }}" id="main-image">
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div id="hints-section" class="hints">
+                    <div class="hint-container">
+                        {% for hint in hints %}
+                        <div class="hint{% if loop.index0 == 0 %} revealed{% endif %}" id="hint-{{ loop.index }}">{{ hint }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="input-section">
+                    <input type="text" id="country-input" placeholder="Enter country name..." maxlength="50" list="countries-list">
+                    <datalist id="countries-list">
+                        {% for name in valid_countries[:15] %}
+                        <option value="{{ name }}">
+                        {% endfor %}
+                    </datalist>
+                    <button id="submit-btn" type="button">
+                        <i class="fas fa-check"></i> Submit
+                    </button>
+                </div>
+
+                <div id="congratulations" class="congratulations" style="display: none;">
+                    <h3>🎉 Congratulations! 🎉</h3>
+                    <p>You guessed correctly!</p>
+                </div>
+
+                <div id="game-over" class="game-over" style="display: none;">
+                    <h3>😞 Game Over</h3>
+                    <p>You've made 4 incorrect guesses. The answer was <strong>{{ country }}</strong>.</p>
+                    <button id="restart-btn" class="restart-button">Play Again</button>
+                </div>
+
+            </div>
+
+            <div id="celebration" class="celebration">
+                <div class="colorful-boxes">
+                    <div class="box box-1"></div>
+                    <div class="box box-2"></div>
+                    <div class="box box-3"></div>
+                    <div class="box box-4"></div>
+                    <div class="box box-5"></div>
+                    <div class="box box-6"></div>
+                    <div class="box box-7"></div>
+                    <div class="box box-8"></div>
+                </div>
+                <div class="success-message">
+                    <h2>🎉 Amazing! 🎉</h2>
+                    <p>You discovered {{ country }}!</p>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>Part of Fun with Maps Project</p>
+        </footer>
+    </div>
+
+    <script>
+        window.GAME_DATA = {{ game_data | tojson | safe }};
+    </script>
+    <script src="/static/script.js"></script>
 </body>
 </html>
