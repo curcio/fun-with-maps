@@ -24,9 +24,8 @@
 
                 <div class="image-section">
                     <div id="country-image" class="image-container hidden">
-                        {% if image_path %}
-                        <img src="{{ image_path }}" alt="{{ country }}" id="main-image">
-                        {% endif %}
+                        <img src="{{ image_path or '' }}" alt="{{ country or '' }}" id="main-image"
+                             style="{% if not image_path %}display: none;{% endif %}">
                     </div>
                 </div>
 

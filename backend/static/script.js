@@ -284,7 +284,7 @@ class CountryGuessingGame {
 
             console.log('New game data:', newGameData);
 
-            // Update game state with new country
+                        // Update game state with new country
             this.validCountries = newGameData.valid_countries ?
                 newGameData.valid_countries.map(country => country.toLowerCase()) :
                 this.staticValidCountries;
@@ -293,6 +293,7 @@ class CountryGuessingGame {
 
             console.log('New correct answer:', this.correctAnswer);
             console.log('New alternative answers:', this.alternativeAnswers);
+            console.log('New image path:', newGameData.image_path);
 
             // Update hints in the DOM
             if (newGameData.hints && newGameData.hints.length > 0) {
@@ -306,6 +307,21 @@ class CountryGuessingGame {
                         }
                     }
                 }
+            }
+
+            // Update the image if available
+            const mainImage = document.getElementById('main-image');
+            if (mainImage && newGameData.image_path) {
+                mainImage.src = newGameData.image_path;
+                mainImage.alt = newGameData.country;
+                mainImage.style.display = 'block';
+                console.log('Updated image to:', newGameData.image_path);
+            } else if (mainImage) {
+                // Clear image if no path provided
+                mainImage.src = '';
+                mainImage.alt = '';
+                mainImage.style.display = 'none';
+                console.log('No image available for country:', newGameData.country);
             }
 
         } catch (error) {
