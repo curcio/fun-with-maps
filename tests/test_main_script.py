@@ -1,9 +1,10 @@
-"""Tests for high-level script functions.
 
+"""Tests for high-level script functions.
 These tests mock heavy operations so that they run quickly.
 """
 
 import os
+import subprocess
 import sys
 from unittest.mock import MagicMock, patch
 
@@ -57,6 +58,7 @@ class TestMainScript:
             mock_report.assert_called_once()
             assert mock_clear.called
             assert mock_set.called
+
 
     def test_get_country_polygon_return_value(self):
         """``get_country_polygon`` should not return a tuple."""
