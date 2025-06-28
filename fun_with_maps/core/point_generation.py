@@ -168,17 +168,19 @@ class PointGenerator:
 
             print(f"Generating {k} points using triangulation method...")
 
-            # Get polygon coordinates
+            # Create triangulation from the polygon geometry
+            # shapely.ops.triangulate expects a geometry object rather than a
+            # list of coordinates. The previous implementation incorrectly
+            # passed only the coordinate list which caused a TypeError when the
+            # function was executed.  We now always pass the polygon geometry
+            # directly so triangulation works as expected for both Polygon and
+            # MultiPolygon geometries.
             if hasattr(geometry, "exterior"):
-                # Single Polygon
-                coords = list(geometry.exterior.coords)
+                polygon_for_triangulation = geometry
             else:
-                # MultiPolygon - use the largest polygon
-                largest_poly = max(geometry.geoms, key=lambda p: p.area)
-                coords = list(largest_poly.exterior.coords)
+                polygon_for_triangulation = max(geometry.geoms, key=lambda p: p.area)
 
-            # Create triangulation
-            triangles = triangulate(coords)
+            triangles = triangulate(polygon_for_triangulation)
 
             # Calculate areas of triangles that are inside the polygon
             valid_triangles = []
