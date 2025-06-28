@@ -3,7 +3,7 @@ from unittest.mock import patch
 import geopandas as gpd
 from click.testing import CliRunner
 
-from scripts.cli import cli
+from fun_with_maps.cli import cli
 
 
 def run_cli(args):
@@ -17,7 +17,7 @@ def test_cli_help_runs():
     assert "Geographic data CLI tool" in result.output
 
 
-@patch("scripts.cli.fetch_world_map")
+@patch("fun_with_maps.cli.fetch_world_map")
 def test_fetch_world_map_command(mock_fetch, tmp_path):
     mock_fetch.return_value = gpd.GeoDataFrame({"geometry": []})
     output = tmp_path / "map.geojson"

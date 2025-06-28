@@ -57,7 +57,7 @@ dev = [
 
 [project.scripts]
 fun-with-maps = "scripts.main:main"
-fun-with-maps-cli = "scripts.cli:cli"
+fun-with-maps-cli = "fun_with_maps.cli:cli"
 
 [project.urls]
 Homepage = "https://github.com/your-username/fun-with-maps"
