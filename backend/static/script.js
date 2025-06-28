@@ -13,6 +13,7 @@ class CountryGuessingGame {
         this.validCountries = data.valid_countries || this.validCountries;
         this.correctAnswer = (data.country || 'iran').toLowerCase();
         this.alternativeAnswers = [];
+        this.feedbackEl = null;
 
         // Game state
         this.wrongAttempts = 0;
@@ -61,6 +62,12 @@ class CountryGuessingGame {
         // Set up the final game with all features enabled
         document.getElementById('game-interface').style.display = 'block';
 
+        // Feedback element
+        this.feedbackEl = document.getElementById('feedback');
+        if (this.feedbackEl) {
+            this.feedbackEl.style.display = 'none';
+        }
+
         // Initialize image container as hidden
         const imageContainer = document.querySelector('.image-container');
         imageContainer.classList.add('hidden');
@@ -87,6 +94,8 @@ class CountryGuessingGame {
         const input = document.getElementById('country-input');
         const userAnswer = input.value.trim().toLowerCase();
 
+        this.hideFeedback();
+
         if (!userAnswer) {
             return; // Just return, no feedback needed
         }
@@ -109,6 +118,8 @@ class CountryGuessingGame {
 
     handleCorrectAnswer() {
         this.gameWon = true;
+
+        this.showFeedback('Correct!', false);
 
         // Show congratulations message
         document.getElementById('congratulations').style.display = 'block';
@@ -139,8 +150,9 @@ class CountryGuessingGame {
 
         // Check if answer is in valid countries list
         if (!this.validCountries.includes(answer)) {
-            // Invalid country, don't count as wrong attempt, don't show hint
+            // Invalid country, don't count as wrong attempt, show feedback
             this.wrongAttempts--;
+            this.showFeedback('Country not recognized.', true);
             return;
         }
 
@@ -152,6 +164,7 @@ class CountryGuessingGame {
 
         // Show next hint for wrong but valid answer
         this.showNextHint();
+        this.showFeedback('Try again!', true);
     }
 
     showNextHint() {
@@ -192,6 +205,23 @@ class CountryGuessingGame {
         celebration.classList.remove('active');
     }
 
+    showFeedback(message, isError) {
+        if (!this.feedbackEl) {
+            this.feedbackEl = document.getElementById('feedback');
+        }
+        if (!this.feedbackEl) return;
+        this.feedbackEl.textContent = message;
+        this.feedbackEl.classList.remove('success', 'error');
+        this.feedbackEl.classList.add(isError ? 'error' : 'success');
+        this.feedbackEl.style.display = 'block';
+    }
+
+    hideFeedback() {
+        if (this.feedbackEl) {
+            this.feedbackEl.style.display = 'none';
+        }
+    }
+
     resetGame() {
         this.wrongAttempts = 0;
         this.gameWon = false;
@@ -228,6 +258,7 @@ class CountryGuessingGame {
         imageContainer.classList.add('hidden');
         imageContainer.classList.remove('show');
 
+        this.hideFeedback();
         this.hideCelebration();
     }
 }

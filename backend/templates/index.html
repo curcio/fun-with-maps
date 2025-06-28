@@ -41,10 +41,11 @@
                 <div class="input-section">
                     <input type="text" id="country-input" placeholder="Enter country name..." maxlength="50" list="countries-list">
                     <datalist id="countries-list">
-                        {% for name in valid_countries[:15] %}
+                        {% for name in valid_countries %}
                         <option value="{{ name }}">
                         {% endfor %}
                     </datalist>
+                    <div id="feedback" class="feedback" style="display:none;"></div>
                     <button id="submit-btn" type="button">
                         <i class="fas fa-check"></i> Submit
                     </button>
