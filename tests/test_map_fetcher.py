@@ -12,7 +12,7 @@ class TestFetchWorldMap:
     def test_fetch_world_map_with_builtin_dataset(self):
         """Test fetching world map using built-in geopandas dataset."""
         # This test uses the actual geopandas built-in dataset
-        world_map = fetch_world_map(resolution="low")
+        world_map = fetch_world_map(resolution="high")
 
         # Since the built-in dataset is deprecated in newer versions, we allow None
         if world_map is not None:
@@ -48,7 +48,7 @@ class TestFetchWorldMap:
         with patch("geopandas.read_file") as mock_read:
             mock_read.return_value = sample_data
 
-            result = fetch_world_map(resolution="low")
+            result = fetch_world_map(resolution="high")
 
             assert result is not None
             assert isinstance(result, gpd.GeoDataFrame)
@@ -60,7 +60,7 @@ class TestFetchWorldMap:
         mock_get.side_effect = requests.exceptions.RequestException("Network error")
 
         # Should fall back to built-in dataset
-        result = fetch_world_map(resolution="low")
+        result = fetch_world_map(resolution="high")
 
         # Should still return something (built-in dataset) or None
         assert result is None or isinstance(result, gpd.GeoDataFrame)
@@ -77,7 +77,7 @@ class TestFetchWorldMap:
 
     def test_fetch_world_map_with_custom_save_path(self, temp_file):
         """Test fetching with custom save path."""
-        result = fetch_world_map(resolution="low", save_path=temp_file)
+        result = fetch_world_map(resolution="high", save_path=temp_file)
 
         if result is not None:
             assert isinstance(result, gpd.GeoDataFrame)
@@ -87,7 +87,7 @@ class TestFetchWorldMap:
         """Test handling of geopandas read errors."""
         mock_read.side_effect = Exception("Read error")
 
-        result = fetch_world_map(resolution="low")
+        result = fetch_world_map(resolution="high")
 
         # Should handle error gracefully
         assert result is None

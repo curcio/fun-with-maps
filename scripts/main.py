@@ -317,7 +317,7 @@ def solve_tsp_for_country(capitals: gpd.GeoDataFrame, country_name: str = "Argen
             from fun_with_maps.core.map_fetcher import fetch_world_map
 
             print("📊 Creating TSP visualization...")
-            world_map = fetch_world_map(resolution="low")
+            world_map = fetch_world_map(resolution="high")
             country_polygon = get_country_polygon(world_map, country_name)
             
             if country_polygon is None:
@@ -374,7 +374,7 @@ def setup_country_analysis(country_name: str):
         tuple: (world_map, country_polygon)
     """
     print("Fetching world map...")
-    world_map = fetch_world_map(resolution="low")
+    world_map = fetch_world_map(resolution="high")
 
     print(f"Getting {country_name} polygon...")
     country_polygon = get_country_polygon(world_map, country_name)
@@ -522,7 +522,7 @@ def voronoi_only_analysis(country_name: str = None):
     # Handle country selection
     if country_name is None:
         print("No country specified. Loading world map to show country selector...")
-        world_map_temp = fetch_world_map(resolution="low")
+        world_map_temp = fetch_world_map(resolution="high")
         if world_map_temp is None:
             print("❌ Failed to load world map. Cannot show country selector.")
             return
@@ -548,7 +548,7 @@ def voronoi_only_analysis(country_name: str = None):
 
         # Step 1: Setup country analysis (minimal - just get country polygon)
         print("Fetching world map...")
-        world_map = fetch_world_map(resolution="low")
+        world_map = fetch_world_map(resolution="high")
         print(f"Getting {country_name} polygon...")
         country_polygon = get_country_polygon(world_map, country_name)
         
@@ -613,7 +613,7 @@ def main(country_name: str = None):
     # Handle country selection
     if country_name is None:
         print("No country specified. Loading world map to show country selector...")
-        world_map_temp = fetch_world_map(resolution="low")
+        world_map_temp = fetch_world_map(resolution="high")
         if world_map_temp is None:
             print("❌ Failed to load world map. Cannot show country selector.")
             return

@@ -39,7 +39,7 @@ class TestExampleFunctions:
         example_closest_country_analysis()
 
         # Verify that fetch_world_map was called
-        mock_fetch.assert_called_once_with(resolution="low")
+        mock_fetch.assert_called_once_with(resolution="high")
 
         # Verify that analyze_point_location was called multiple times (for each test point)
         assert mock_analyze.call_count > 0
@@ -86,7 +86,7 @@ class TestExampleFunctions:
         run_comprehensive_demo()
 
         # Verify that key functions were called
-        mock_fetch.assert_called_once_with(resolution="low")
+        mock_fetch.assert_called_once_with(resolution="high")
         assert mock_find_closest.call_count > 0
         assert mock_analyze.call_count > 0
         mock_viz.assert_called_once()
