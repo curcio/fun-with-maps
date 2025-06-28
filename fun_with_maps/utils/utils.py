@@ -501,7 +501,7 @@ def debug_individual_region(country_name: str, region_name: str):
     print(f"=== DEBUGGING INDIVIDUAL REGION: {region_name} in {country_name} ===")
 
     # Get data
-    world_map = fetch_world_map(resolution="low")
+    world_map = fetch_world_map(resolution="high")
     country_polygon = get_country_polygon(world_map, country_name)
     capitals = get_admin1_capitals(country_name)
 

@@ -65,7 +65,7 @@ def test_zero_overlaps_argentina():
 
     # Load Argentina data
     print("Loading Argentina data...")
-    world_map = fetch_world_map(resolution="low")
+    world_map = fetch_world_map(resolution="high")
     country_gdf = get_country_polygon(world_map, "Argentina")
     if country_gdf is None:
         print("❌ Failed to load Argentina data")

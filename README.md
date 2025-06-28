@@ -56,7 +56,7 @@ python scripts/cli.py get-admin1-capitals "Argentina"
 ```python
 from fun_with_maps import fetch_world_map, get_country_polygon, generate_random_points_in_polygon
 
-# Fetch world map data
+# Fetch world map data (1:10m scale by default)
 world_map = fetch_world_map()
 
 # Get a specific country
@@ -161,7 +161,7 @@ fun-with-maps/
 from fun_with_maps.core.map_fetcher import fetch_world_map
 world_map = fetch_world_map(resolution="medium")
 
-# Country analysis  
+# Country analysis
 from fun_with_maps.core.country_analysis import get_country_polygon
 country = get_country_polygon(world_map, "Germany")
 
@@ -170,7 +170,7 @@ from fun_with_maps.core.point_generation import generate_random_points_in_polygo
 points = generate_random_points_in_polygon(country, count=1000)
 
 # Closest country detection
-from fun_with_maps.core.closest_country import find_closest_countries  
+from fun_with_maps.core.closest_country import find_closest_countries
 closest = find_closest_countries(world_map, points)
 ```
 
@@ -194,6 +194,6 @@ from fun_with_maps.visualization.visualization import visualize_country_polygon
 visualize_country_polygon(country, "Germany")
 
 # Voronoi visualization
-from fun_with_maps.visualization.voronoi_visualization import display_voronoi_diagram  
+from fun_with_maps.visualization.voronoi_visualization import display_voronoi_diagram
 display_voronoi_diagram(country, capitals, "Germany")
 ```

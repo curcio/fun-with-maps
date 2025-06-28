@@ -28,7 +28,7 @@ def voronoi_test_for_country(country_name: str):
     try:
         # Get map and country data
         print("1. Fetching world map...")
-        world_map = fetch_world_map(resolution="low")
+        world_map = fetch_world_map(resolution="high")
 
         print(f"2. Getting {country_name} polygon...")
         country_polygon = get_country_polygon(world_map, country_name)
@@ -70,7 +70,7 @@ def inspect_individual_polygons(country_name: str):
     try:
         # Get map and country data
         print("1. Fetching world map...")
-        world_map = fetch_world_map(resolution="low")
+        world_map = fetch_world_map(resolution="high")
 
         print(f"2. Getting {country_name} polygon...")
         country_polygon = get_country_polygon(world_map, country_name)

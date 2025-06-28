@@ -4,7 +4,9 @@ import geopandas as gpd
 import requests
 
 
-def fetch_world_map(resolution="low", save_path="world_map.geojson"):
+def fetch_world_map(
+    resolution="high", save_path=os.path.join("data", "world_map.geojson")
+):
     """
     Fetch a world political map with specified resolution using geopandas and requests.
 
@@ -28,8 +30,6 @@ def fetch_world_map(resolution="low", save_path="world_map.geojson"):
         except Exception as e:
             print(f"Failed to load existing file: {e}")
             print("Proceeding to download fresh data...")
-
-
 
     # Alternative: Use Natural Earth directly
     # For low resolution (1:110m scale)
@@ -66,7 +66,8 @@ def fetch_world_map(resolution="low", save_path="world_map.geojson"):
 
         # Save the data for future use
         try:
-            world.to_file(save_path, driver='GeoJSON')
+            os.makedirs(os.path.dirname(save_path) or ".", exist_ok=True)
+            world.to_file(save_path, driver="GeoJSON")
             print(f"Successfully saved map data to '{save_path}'")
         except Exception as e:
             print(f"Warning: Could not save map data to '{save_path}': {e}")
