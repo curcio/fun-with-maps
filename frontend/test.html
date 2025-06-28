@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend Test - Guess the Country</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #5a6fd8;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 3px;
+            margin-left: 10px;
+            font-size: 12px;
+        }
+        .status.pass {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.fail {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Frontend Module Test Suite</h1>
+    <p>This page tests all iterations of the Guess the Country game.</p>
+    
+    <div class="test-section">
+        <h2>📋 Pre-flight Checks</h2>
+        <div id="preflight-results">
+            <p>🔍 Checking file structure...</p>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🎯 Manual Testing</h2>
+        <p>Click the buttons below to test each iteration:</p>
+        
+        <button class="test-button" onclick="window.open('index.html', '_blank')">
+            🖼️ Open Main Application
+        </button>
+        
+        <h3>Test Scenarios:</h3>
+        <ul>
+            <li><strong>Iteration 1:</strong> Should show only the centered Iran map image</li>
+            <li><strong>Iteration 2:</strong> Should show input field, hide image until correct answer</li>
+            <li><strong>Iteration 3:</strong> Should validate against country list (try "invalid country")</li>
+            <li><strong>Iteration 4:</strong> Should show progressive hints on wrong answers</li>
+            <li><strong>Iteration 5:</strong> Should show fireworks animation on correct answer</li>
+        </ul>
+        
+        <h3>Test Inputs:</h3>
+        <ul>
+            <li>✅ Correct: "iran" or "persia"</li>
+            <li>❌ Valid but wrong: "france", "germany", "japan"</li>
+            <li>❌ Invalid: "xyz", "invalid country"</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>📊 Automated Checks</h2>
+        <div id="automated-results">
+            <p>Running automated tests...</p>
+        </div>
+    </div>
+
+    <script>
+        // Automated testing
+        document.addEventListener('DOMContentLoaded', () => {
+            runPreflightChecks();
+            runAutomatedTests();
+        });
+
+        function runPreflightChecks() {
+            const results = document.getElementById('preflight-results');
+            const checks = [
+                { name: 'index.html exists', test: () => fetch('index.html').then(r => r.ok) },
+                { name: 'style.css exists', test: () => fetch('style.css').then(r => r.ok) },
+                { name: 'script.js exists', test: () => fetch('script.js').then(r => r.ok) },
+                { name: 'Image path accessible', test: () => fetch('../images/Iran/plot_01_Iran_with_Random_Points.png').then(r => r.ok) }
+            ];
+
+            results.innerHTML = '<h4>File Structure Tests:</h4>';
+            
+            checks.forEach(check => {
+                const div = document.createElement('div');
+                div.innerHTML = `${check.name} <span class="status">Testing...</span>`;
+                results.appendChild(div);
+                
+                check.test()
+                    .then(passed => {
+                        const status = div.querySelector('.status');
+                        status.textContent = passed ? 'PASS' : 'FAIL';
+                        status.className = `status ${passed ? 'pass' : 'fail'}`;
+                    })
+                    .catch(error => {
+                        const status = div.querySelector('.status');
+                        status.textContent = 'FAIL';
+                        status.className = 'status fail';
+                    });
+            });
+        }
+
+        function runAutomatedTests() {
+            const results = document.getElementById('automated-results');
+            
+            // Test that we can create a new instance of the game
+            const iframe = document.createElement('iframe');
+            iframe.src = 'index.html';
+            iframe.style.display = 'none';
+            document.body.appendChild(iframe);
+            
+            iframe.onload = () => {
+                try {
+                    const gameInstance = iframe.contentWindow.game;
+                    const tests = [
+                        {
+                            name: 'Game instance created',
+                            test: () => gameInstance !== undefined
+                        },
+                        {
+                            name: 'Valid countries array populated',
+                            test: () => gameInstance.validCountries && gameInstance.validCountries.length >= 10
+                        },
+                        {
+                            name: 'Correct answer validation works',
+                            test: () => gameInstance.isCorrectAnswer('iran') && gameInstance.isCorrectAnswer('persia')
+                        },
+                        {
+                            name: 'Wrong answer detection works',
+                            test: () => !gameInstance.isCorrectAnswer('france') && !gameInstance.isCorrectAnswer('invalid')
+                        }
+                    ];
+
+                    results.innerHTML = '<h4>JavaScript Logic Tests:</h4>';
+                    
+                    tests.forEach(test => {
+                        const div = document.createElement('div');
+                        try {
+                            const passed = test.test();
+                            div.innerHTML = `${test.name} <span class="status ${passed ? 'pass' : 'fail'}">${passed ? 'PASS' : 'FAIL'}</span>`;
+                        } catch (error) {
+                            div.innerHTML = `${test.name} <span class="status fail">FAIL (${error.message})</span>`;
+                        }
+                        results.appendChild(div);
+                    });
+                } catch (error) {
+                    results.innerHTML = '<p>❌ Could not access game instance. Check console for errors.</p>';
+                }
+            };
+        }
+    </script>
+</body>
+</html> 
