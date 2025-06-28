@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# flake8: noqa
 """
 Refactored main script for map analysis with Voronoi diagrams.
 
@@ -8,6 +9,7 @@ based on capital cities.
 """
 
 import argparse
+import os
 import sys
 from typing import List, Tuple
 
@@ -15,12 +17,10 @@ import geopandas as gpd
 import matplotlib
 import matplotlib.pyplot as plt
 
-import sys
-import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from fun_with_maps.core.country_analysis import get_available_countries, get_country_polygon
-from fun_with_maps.core.country_selector import show_country_selector
+from shapely.geometry import Point
+
 from fun_with_maps.analysis.data_processing import (
     add_closest_countries_to_points,
     calculate_point_count,
@@ -28,15 +28,27 @@ from fun_with_maps.analysis.data_processing import (
     get_unique_countries_from_list,
     print_country_statistics,
 )
-from fun_with_maps.core.map_fetcher import fetch_world_map
 from fun_with_maps.analysis.parallel_processing import choose_processing_method
-from fun_with_maps.core.point_generation import generate_random_points_in_polygon
 from fun_with_maps.analysis.tsp_solver import solve_tsp
-from fun_with_maps.utils.utils import clear_plot_tracker, generate_pdf_report, set_country_info, show_plot
-from fun_with_maps.visualization.visualization import visualize_country_polygon, visualize_polygon_with_points
 from fun_with_maps.analysis.voronoi_analysis import get_admin1_capitals
+from fun_with_maps.core.country_analysis import (
+    get_available_countries,
+    get_country_polygon,
+)
+from fun_with_maps.core.country_selector import show_country_selector
+from fun_with_maps.core.map_fetcher import fetch_world_map
+from fun_with_maps.core.point_generation import generate_random_points_in_polygon
+from fun_with_maps.utils.utils import (
+    clear_plot_tracker,
+    generate_pdf_report,
+    set_country_info,
+    show_plot,
+)
+from fun_with_maps.visualization.visualization import (
+    visualize_country_polygon,
+    visualize_polygon_with_points,
+)
 from fun_with_maps.visualization.voronoi_visualization import display_voronoi_diagram
-from shapely.geometry import Point
 
 matplotlib.rcParams["figure.max_open_warning"] = 50
 
@@ -223,47 +235,55 @@ def print_tour_details(
             print(f"  {i+1:2d}. {city_name}")
 
 
-def filter_capitals_to_largest_polygon(capitals_gdf: gpd.GeoDataFrame, country_polygon) -> gpd.GeoDataFrame:
+def filter_capitals_to_largest_polygon(
+    capitals_gdf: gpd.GeoDataFrame, country_polygon
+) -> gpd.GeoDataFrame:
     """
     Filter capital cities to only those that lie within the largest polygon of the country.
-    
+
     This is useful for countries with multiple polygons (main land + islands) where
     we want to focus TSP analysis on the main landmass.
-    
+
     Args:
         capitals_gdf: GeoDataFrame containing capital cities
         country_polygon: Country polygon (could be single polygon or multipolygon)
-        
+
     Returns:
         GeoDataFrame containing only capitals on the largest polygon
     """
     if capitals_gdf.empty:
         return capitals_gdf
-    
+
     # Get the geometry
-    if hasattr(country_polygon, 'geometry'):
+    if hasattr(country_polygon, "geometry"):
         geometry = country_polygon.geometry.iloc[0]
     else:
         geometry = country_polygon
-    
+
     # If it's a single polygon, no filtering needed
-    if hasattr(geometry, 'geoms'):
+    if hasattr(geometry, "geoms"):
         # It's a MultiPolygon - find the largest one
         polygons = list(geometry.geoms)
         largest_polygon = max(polygons, key=lambda p: p.area)
-        
-        print(f"Country has {len(polygons)} polygons. Filtering capitals to largest polygon (area: {largest_polygon.area:.6f})")
-        
+
+        print(
+            f"Country has {len(polygons)} polygons. Filtering capitals to largest polygon (area: {largest_polygon.area:.6f})"
+        )
+
         # Filter capitals to only those in the largest polygon
         filtered_capitals = []
         for idx, row in capitals_gdf.iterrows():
             capital_point = Point(row.geometry.x, row.geometry.y)
-            if largest_polygon.contains(capital_point) or largest_polygon.touches(capital_point):
+            if largest_polygon.contains(capital_point) or largest_polygon.touches(
+                capital_point
+            ):
                 filtered_capitals.append(row)
-        
+
         if filtered_capitals:
             filtered_gdf = gpd.GeoDataFrame(filtered_capitals, crs=capitals_gdf.crs)
-            print(f"Filtered from {len(capitals_gdf)} to {len(filtered_gdf)} capitals on largest polygon")
+            print(
+                f"Filtered from {len(capitals_gdf)} to {len(filtered_gdf)} capitals on largest polygon"
+            )
             return filtered_gdf
         else:
             print("No capitals found on the largest polygon!")
@@ -284,7 +304,9 @@ def solve_tsp_for_country(capitals: gpd.GeoDataFrame, country_name: str = "Argen
     """
     print(f"\n{'='*60}")
     print(f"SOLVING TSP FOR {country_name.upper()} CAPITAL CITIES")
-    print(f"(Capitals may be filtered to the largest polygon for multi-polygon countries)")
+    print(
+        f"(Capitals may be filtered to the largest polygon for multi-polygon countries)"
+    )
     print(f"{'='*60}")
 
     try:
@@ -319,15 +341,19 @@ def solve_tsp_for_country(capitals: gpd.GeoDataFrame, country_name: str = "Argen
             print("📊 Creating TSP visualization...")
             world_map = fetch_world_map(resolution="low")
             country_polygon = get_country_polygon(world_map, country_name)
-            
+
             if country_polygon is None:
                 raise ValueError(f"Country '{country_name}' not found")
-            
+
             # Extract the actual country name from the polygon data
-            actual_country_name = extract_country_name_from_polygon(country_polygon, country_name)
+            actual_country_name = extract_country_name_from_polygon(
+                country_polygon, country_name
+            )
 
             # Visualize the tour
-            visualize_tsp_tour(country_polygon, capitals, tour, tour_cost, actual_country_name)
+            visualize_tsp_tour(
+                country_polygon, capitals, tour, tour_cost, actual_country_name
+            )
 
         else:
             print("❌ Failed to solve TSP")
@@ -344,22 +370,22 @@ def solve_tsp_for_country(capitals: gpd.GeoDataFrame, country_name: str = "Argen
 def extract_country_name_from_polygon(country_polygon, fallback_name: str) -> str:
     """
     Extract the actual country name from polygon data.
-    
+
     Args:
         country_polygon: Country polygon GeoDataFrame
         fallback_name: Name to use if extraction fails
-        
+
     Returns:
         str: The extracted country name or fallback name
     """
     if country_polygon is None or country_polygon.empty:
         return fallback_name
-    
+
     name_columns = ["NAME", "name", "NAME_EN", "ADMIN", "Country", "country"]
     for col in name_columns:
         if col in country_polygon.columns:
             return country_polygon.iloc[0][col]
-    
+
     return fallback_name
 
 
@@ -378,12 +404,14 @@ def setup_country_analysis(country_name: str):
 
     print(f"Getting {country_name} polygon...")
     country_polygon = get_country_polygon(world_map, country_name)
-    
+
     if country_polygon is None:
         raise ValueError(f"Country '{country_name}' not found")
-    
+
     # Extract the actual country name from the polygon data
-    actual_country_name = extract_country_name_from_polygon(country_polygon, country_name)
+    actual_country_name = extract_country_name_from_polygon(
+        country_polygon, country_name
+    )
 
     print(f"Visualizing {actual_country_name}...")
     visualize_country_polygon(country_polygon, actual_country_name)
@@ -472,7 +500,9 @@ def create_colored_visualization(
     unique_countries = get_unique_countries_from_list(closest_countries)
 
     # Create colored visualization (using existing visualization module)
-    from fun_with_maps.visualization.visualization import create_country_visualization_with_colors
+    from fun_with_maps.visualization.visualization import (
+        create_country_visualization_with_colors,
+    )
 
     create_country_visualization_with_colors(
         world_map, country_polygon, points, unique_countries, country_name
@@ -551,12 +581,14 @@ def voronoi_only_analysis(country_name: str = None):
         world_map = fetch_world_map(resolution="low")
         print(f"Getting {country_name} polygon...")
         country_polygon = get_country_polygon(world_map, country_name)
-        
+
         if country_polygon is None:
             raise ValueError(f"Country '{country_name}' not found")
-        
+
         # Extract the actual country name from the polygon data
-        actual_country_name = extract_country_name_from_polygon(country_polygon, country_name)
+        actual_country_name = extract_country_name_from_polygon(
+            country_polygon, country_name
+        )
 
         # Initialize country info for plot tracking
         set_country_info(actual_country_name, country_polygon=country_polygon)
@@ -577,21 +609,21 @@ def voronoi_only_analysis(country_name: str = None):
 def get_largest_polygon(country_polygon):
     """
     Extract the largest polygon from a country polygon (useful for countries with multiple polygons).
-    
+
     Args:
         country_polygon: Country polygon (could be single polygon or multipolygon)
-        
+
     Returns:
         The largest polygon geometry
     """
     # Get the geometry
-    if hasattr(country_polygon, 'geometry'):
+    if hasattr(country_polygon, "geometry"):
         geometry = country_polygon.geometry.iloc[0]
     else:
         geometry = country_polygon
-    
+
     # If it's a MultiPolygon, return the largest one
-    if hasattr(geometry, 'geoms'):
+    if hasattr(geometry, "geoms"):
         polygons = list(geometry.geoms)
         largest_polygon = max(polygons, key=lambda p: p.area)
         return largest_polygon
@@ -600,11 +632,12 @@ def get_largest_polygon(country_polygon):
         return geometry
 
 
-def main(country_name: str = None):
+def main(country_name: str = None, skip_pdf: bool = False):
     """Main function orchestrating the entire analysis.
 
     Args:
         country_name: Name of the country to analyze. If None, will show selector.
+        skip_pdf: If True, do not generate the PDF report.
     """
     # Configuration
     point_generation_factor = 10
@@ -668,14 +701,21 @@ def main(country_name: str = None):
         create_voronoi_analysis(country_polygon, country_name, capitals)
 
         # Step 6: Solve TSP for capital cities (filtered to largest polygon only)
-        capitals_filtered = filter_capitals_to_largest_polygon(capitals, country_polygon)
+        capitals_filtered = filter_capitals_to_largest_polygon(
+            capitals, country_polygon
+        )
         solve_tsp_for_country(capitals_filtered, country_name)
 
         # Step 7: Generate comprehensive PDF report
-        print(f"\n{'='*60}")
-        print("GENERATING COMPREHENSIVE PDF REPORT")
-        print(f"{'='*60}")
-        generate_pdf_report()
+        if not skip_pdf:
+            print(f"\n{'='*60}")
+            print("GENERATING COMPREHENSIVE PDF REPORT")
+            print(f"{'='*60}")
+            os.makedirs("docs", exist_ok=True)
+            pdf_path = os.path.join(
+                "docs", f"{country_name.replace(' ', '_')}_analysis_report.pdf"
+            )
+            generate_pdf_report(output_filename=pdf_path)
 
     except Exception as e:
         print(f"Error in main analysis: {e}")
@@ -707,6 +747,11 @@ Examples:
         action="store_true",
         help="Run only Voronoi analysis (skip random points, closest countries, TSP, and PDF generation)",
     )
+    parser.add_argument(
+        "--skip-pdf",
+        action="store_true",
+        help="Skip generating the PDF report",
+    )
 
     args = parser.parse_args()
 
@@ -714,4 +759,4 @@ Examples:
     if args.only_voronoi:
         voronoi_only_analysis(country_name=args.country)
     else:
-        main(country_name=args.country)
+        main(country_name=args.country, skip_pdf=args.skip_pdf)
