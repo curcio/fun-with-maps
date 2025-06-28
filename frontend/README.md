@@ -58,7 +58,7 @@ frontend/
 
 1. **Open the application**: Open `index.html` in a web browser
 2. **Navigate iterations**: Use the iteration control panel in the top-right corner
-3. **Play the game**: 
+3. **Play the game**:
    - Enter a country name in the input field
    - Press Enter or click Submit
    - View hints if you get wrong answers (Iteration 4+)
@@ -132,4 +132,4 @@ Potential improvements could include:
 
 ## License
 
-Part of the Fun with Maps project. 
+Part of the Fun with Maps project.

@@ -51,7 +51,7 @@
 <body>
     <h1>🧪 Frontend Module Test Suite</h1>
     <p>This page tests all iterations of the Guess the Country game.</p>
-    
+
     <div class="test-section">
         <h2>📋 Pre-flight Checks</h2>
         <div id="preflight-results">
@@ -62,11 +62,11 @@
     <div class="test-section">
         <h2>🎯 Manual Testing</h2>
         <p>Click the buttons below to test each iteration:</p>
-        
+
         <button class="test-button" onclick="window.open('index.html', '_blank')">
             🖼️ Open Main Application
         </button>
-        
+
         <h3>Test Scenarios:</h3>
         <ul>
             <li><strong>Iteration 1:</strong> Should show only the centered Iran map image</li>
@@ -75,7 +75,7 @@
             <li><strong>Iteration 4:</strong> Should show progressive hints on wrong answers</li>
             <li><strong>Iteration 5:</strong> Should show fireworks animation on correct answer</li>
         </ul>
-        
+
         <h3>Test Inputs:</h3>
         <ul>
             <li>✅ Correct: "iran" or "persia"</li>
@@ -108,12 +108,12 @@
             ];
 
             results.innerHTML = '<h4>File Structure Tests:</h4>';
-            
+
             checks.forEach(check => {
                 const div = document.createElement('div');
                 div.innerHTML = `${check.name} <span class="status">Testing...</span>`;
                 results.appendChild(div);
-                
+
                 check.test()
                     .then(passed => {
                         const status = div.querySelector('.status');
@@ -130,13 +130,13 @@
 
         function runAutomatedTests() {
             const results = document.getElementById('automated-results');
-            
+
             // Test that we can create a new instance of the game
             const iframe = document.createElement('iframe');
             iframe.src = 'index.html';
             iframe.style.display = 'none';
             document.body.appendChild(iframe);
-            
+
             iframe.onload = () => {
                 try {
                     const gameInstance = iframe.contentWindow.game;
@@ -160,7 +160,7 @@
                     ];
 
                     results.innerHTML = '<h4>JavaScript Logic Tests:</h4>';
-                    
+
                     tests.forEach(test => {
                         const div = document.createElement('div');
                         try {
@@ -178,4 +178,4 @@
         }
     </script>
 </body>
-</html> 
+</html>

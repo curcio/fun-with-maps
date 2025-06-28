@@ -41,9 +41,7 @@ def fetch_world_map(
             "download/50m/cultural/ne_50m_admin_0_countries.zip"
         )
     else:
-        url = (
-            "https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_0_countries.zip"
-        )
+        url = "https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_0_countries.zip"
 
     try:
         print(f"Fetching {resolution} resolution world map data...")

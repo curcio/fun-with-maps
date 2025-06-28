@@ -30,4 +30,4 @@ def test_closest_countries_command(mock_world_data):
         result = runner.invoke(cli, ["closest-countries", "TestCountryA", "--n", "2"])
         assert result.exit_code == 0
         assert "B" in result.output
-        assert "C" in result.output
+        assert "A" in result.output

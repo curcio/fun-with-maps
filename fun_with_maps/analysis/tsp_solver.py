@@ -20,11 +20,11 @@ class TSPSolver:
     """
     A class for solving Traveling Salesman Problems using OR-Tools.
     """
-    
+
     def __init__(self, time_limit: float = 30.0, strategy: str = "guided_local_search"):
         """
         Initialize the TSP solver.
-        
+
         Args:
             time_limit: Maximum time limit in seconds for solving
             strategy: Search strategy ('guided_local_search', 'simulated_annealing', 'tabu_search')
@@ -32,8 +32,10 @@ class TSPSolver:
         self.time_limit = time_limit
         self.strategy = strategy
         self.distance_matrix = None
-        
-    def create_distance_matrix(self, points: List[Tuple[float, float]]) -> List[List[int]]:
+
+    def create_distance_matrix(
+        self, points: List[Tuple[float, float]]
+    ) -> List[List[int]]:
         """
         Create distance matrix for OR-Tools (using integer distances in meters).
 
@@ -69,9 +71,14 @@ class TSPSolver:
             "tabu_search": routing_enums_pb2.LocalSearchMetaheuristic.TABU_SEARCH,
             "generic_tabu_search": routing_enums_pb2.LocalSearchMetaheuristic.GENERIC_TABU_SEARCH,
         }
-        return strategy_map.get(self.strategy, routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH)
+        return strategy_map.get(
+            self.strategy,
+            routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH,
+        )
 
-    def solve_tsp_ortools(self, points: List[Tuple[float, float]]) -> Tuple[List[int], float]:
+    def solve_tsp_ortools(
+        self, points: List[Tuple[float, float]]
+    ) -> Tuple[List[int], float]:
         """
         Solve the Traveling Salesman Problem using OR-Tools.
 
@@ -96,7 +103,9 @@ class TSPSolver:
             return [0, 1], distance * 2  # Go to other city and return
 
         n = len(points)
-        print(f"Solving TSP for {n} cities using OR-Tools with {self.strategy} strategy...")
+        print(
+            f"Solving TSP for {n} cities using OR-Tools with {self.strategy} strategy..."
+        )
 
         # Create distance matrix
         distance_matrix = self.create_distance_matrix(points)
@@ -140,7 +149,9 @@ class TSPSolver:
             raise Exception("OR-Tools could not find a solution")
 
         # Extract solution
-        print(f"OR-Tools found solution with objective value: {solution.ObjectiveValue()}")
+        print(
+            f"OR-Tools found solution with objective value: {solution.ObjectiveValue()}"
+        )
 
         # Get the route
         index = routing.Start(0)
@@ -165,61 +176,65 @@ class TSPSolver:
 
         return route, total_distance_km
 
-    def solve_multiple_strategies(self, points: List[Tuple[float, float]]) -> Tuple[List[int], float, str]:
+    def solve_multiple_strategies(
+        self, points: List[Tuple[float, float]]
+    ) -> Tuple[List[int], float, str]:
         """
         Try multiple solving strategies and return the best result.
-        
+
         Args:
             points: List of (longitude, latitude) coordinate tuples
-            
+
         Returns:
             Tuple of (best_tour, best_cost, best_strategy)
         """
         strategies = ["guided_local_search", "simulated_annealing", "tabu_search"]
-        best_cost = float('inf')
+        best_cost = float("inf")
         best_tour = []
         best_strategy = ""
-        
+
         original_strategy = self.strategy
         original_time_limit = self.time_limit
-        
+
         # Use shorter time limit for multiple strategies
         self.time_limit = max(10.0, self.time_limit / len(strategies))
-        
+
         for strategy in strategies:
             try:
                 print(f"\n--- Trying strategy: {strategy} ---")
                 self.strategy = strategy
                 tour, cost = self.solve_tsp_ortools(points)
-                
+
                 if cost < best_cost:
                     best_cost = cost
                     best_tour = tour
                     best_strategy = strategy
                     print(f"New best solution: {cost:.1f} km with {strategy}")
-                    
+
             except Exception as e:
                 print(f"Strategy {strategy} failed: {e}")
                 continue
-        
+
         # Restore original settings
         self.strategy = original_strategy
         self.time_limit = original_time_limit
-        
+
         if best_tour:
             print(f"\n=== Best solution: {best_cost:.1f} km using {best_strategy} ===")
             return best_tour, best_cost, best_strategy
         else:
             raise Exception("All solving strategies failed")
 
-    def solve(self, points: List[Tuple[float, float]], try_multiple_strategies: bool = False) -> Tuple[List[int], float]:
+    def solve(
+        self, points: List[Tuple[float, float]], try_multiple_strategies: bool = False
+    ) -> Tuple[List[int], float]:
         """
         Main solving method with option to try multiple strategies.
-        
+
         Args:
             points: List of (longitude, latitude) coordinate tuples
             try_multiple_strategies: Whether to try multiple solving strategies
-            
+
         Returns:
             Tuple of (tour, cost) where tour is list of point indices and cost is total distance in km
         """

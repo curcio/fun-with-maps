@@ -10,49 +10,52 @@ class VoronoiAnalyzer:
     """
     A class for managing Voronoi diagram analysis including data download and processing.
     """
-    
+
     def __init__(self, data_dir: str = "data"):
         """
         Initialize the VoronoiAnalyzer.
-        
+
         Args:
             data_dir: Directory where data files are stored
         """
         self.data_dir = data_dir
-        self.data_url = "https://naciscdn.org/naturalearth/10m/cultural/ne_10m_populated_places.zip"
-        
+        self.data_url = (
+            "https://naciscdn.org/naturalearth/10m/cultural/ne_10m_populated_places.zip"
+        )
+
     def download_populated_places_data(self, zip_path: str) -> bool:
         """
         Download the Natural Earth populated places dataset.
-        
+
         Args:
             zip_path: Path where to save the zip file
-            
+
         Returns:
             bool: True if download successful, False otherwise
         """
         import os
+
         import requests
-        
+
         try:
-            print(f"Downloading populated places data from Natural Earth...")
+            print("Downloading populated places data from Natural Earth...")
             print(f"URL: {self.data_url}")
-            
+
             # Create data directory if it doesn't exist
             os.makedirs(os.path.dirname(zip_path), exist_ok=True)
-            
+
             # Download the file
             response = requests.get(self.data_url, stream=True)
             response.raise_for_status()
-            
+
             # Save the file
-            with open(zip_path, 'wb') as f:
+            with open(zip_path, "wb") as f:
                 for chunk in response.iter_content(chunk_size=8192):
                     f.write(chunk)
-            
+
             print(f"Successfully downloaded: {zip_path}")
             return True
-            
+
         except Exception as e:
             print(f"Error downloading data: {e}")
             return False
@@ -103,7 +106,9 @@ class VoronoiAnalyzer:
         print(f"Found {len(admin1_capitals)} admin-1 capitals for {country_name}")
         return admin1_capitals
 
-    def extract_voronoi_points(self, capitals_gdf: gpd.GeoDataFrame) -> Optional[np.ndarray]:
+    def extract_voronoi_points(
+        self, capitals_gdf: gpd.GeoDataFrame
+    ) -> Optional[np.ndarray]:
         """Extract point coordinates from capitals GeoDataFrame for Voronoi calculation."""
         if capitals_gdf.empty:
             return None
@@ -222,8 +227,7 @@ class VoronoiAnalyzer:
         Returns:
             Tuple of (new_poly1, new_poly2) with no overlap
         """
-        from shapely.ops import unary_union
-        
+
         # Get the generating points
         point1_geom = Point(capital1.geometry.x, capital1.geometry.y)
         point2_geom = Point(capital2.geometry.x, capital2.geometry.y)
@@ -231,57 +235,56 @@ class VoronoiAnalyzer:
         try:
             # Get the intersection
             intersection = poly1.intersection(poly2)
-            
+
             if intersection.is_empty or intersection.area < 1e-10:
                 # No significant overlap
                 return poly1, poly2
-            
+
             # Create the perpendicular bisector line between the two points
             p1 = np.array([point1_geom.x, point1_geom.y])
             p2 = np.array([point2_geom.x, point2_geom.y])
-            
+
             # Midpoint
             midpoint = (p1 + p2) / 2
-            
+
             # Direction vector
             direction = p2 - p1
             direction_norm = np.linalg.norm(direction)
-            
+
             if direction_norm < 1e-10:
                 # Points are too close - fall back to buffer method
                 distance_between = point1_geom.distance(point2_geom)
                 safe_radius = max(distance_between * 0.3, 0.05)
                 return point1_geom.buffer(safe_radius), point2_geom.buffer(safe_radius)
-            
-            # Perpendicular direction (rotate 90 degrees)
-            perp_direction = np.array([-direction[1], direction[0]]) / direction_norm
-            
+
             # Create a long line through the midpoint perpendicular to the line connecting the points
             # This is the proper Voronoi boundary
-            line_length = max(poly1.bounds[2] - poly1.bounds[0], poly1.bounds[3] - poly1.bounds[1]) * 2
-            line_start = midpoint - perp_direction * line_length
-            line_end = midpoint + perp_direction * line_length
-            
-            from shapely.geometry import LineString
-            bisector_line = LineString([line_start, line_end])
-            
+            line_length = (
+                max(
+                    poly1.bounds[2] - poly1.bounds[0], poly1.bounds[3] - poly1.bounds[1]
+                )
+                * 2
+            )
+
             # Create half-planes by buffering the line slightly and taking the difference
             buffer_size = line_length * 2
-            
+
             # Create two large rectangles on either side of the bisector
             # Rectangle for point1 (left side)
             rect1_center = midpoint - direction / direction_norm * buffer_size
-            rect1 = Point(rect1_center).buffer(buffer_size, resolution=4)  # Square-ish buffer
-            
-            # Rectangle for point2 (right side)  
+            rect1 = Point(rect1_center).buffer(
+                buffer_size, resolution=4
+            )  # Square-ish buffer
+
+            # Rectangle for point2 (right side)
             rect2_center = midpoint + direction / direction_norm * buffer_size
             rect2 = Point(rect2_center).buffer(buffer_size, resolution=4)
-            
+
             # Clip the original polygons with their respective half-planes
             try:
                 clipped_poly1 = poly1.intersection(rect1)
                 clipped_poly2 = poly2.intersection(rect2)
-                
+
                 # Ensure the generating points are still inside
                 if not clipped_poly1.is_empty and clipped_poly1.contains(point1_geom):
                     new_poly1 = clipped_poly1
@@ -290,7 +293,7 @@ class VoronoiAnalyzer:
                     distance_between = point1_geom.distance(point2_geom)
                     safe_radius = max(distance_between * 0.3, 0.05)
                     new_poly1 = point1_geom.buffer(safe_radius)
-                
+
                 if not clipped_poly2.is_empty and clipped_poly2.contains(point2_geom):
                     new_poly2 = clipped_poly2
                 else:
@@ -298,7 +301,7 @@ class VoronoiAnalyzer:
                     distance_between = point1_geom.distance(point2_geom)
                     safe_radius = max(distance_between * 0.3, 0.05)
                     new_poly2 = point2_geom.buffer(safe_radius)
-                
+
                 # Final check - ensure no overlap
                 if new_poly1.intersects(new_poly2):
                     overlap_area = new_poly1.intersection(new_poly2).area
@@ -308,16 +311,16 @@ class VoronoiAnalyzer:
                         safe_radius = max(distance_between * 0.25, 0.05)
                         new_poly1 = point1_geom.buffer(safe_radius)
                         new_poly2 = point2_geom.buffer(safe_radius)
-                
+
                 return new_poly1, new_poly2
-                
+
             except Exception as e:
                 print(f"Error in geometric clipping: {e}")
                 # Fallback to buffer method
                 distance_between = point1_geom.distance(point2_geom)
                 safe_radius = max(distance_between * 0.3, 0.05)
                 return point1_geom.buffer(safe_radius), point2_geom.buffer(safe_radius)
-                
+
         except Exception as e:
             print(f"Error resolving overlap: {e}")
             # Final fallback
@@ -326,26 +329,31 @@ class VoronoiAnalyzer:
             return point1_geom.buffer(safe_radius), point2_geom.buffer(safe_radius)
 
     def construct_infinite_voronoi_region(
-        self, vor: Voronoi, point_idx: int, region: List[int], bbox: Polygon, country_geom
+        self,
+        vor: Voronoi,
+        point_idx: int,
+        region: List[int],
+        bbox: Polygon,
+        country_geom,
     ) -> Optional[Polygon]:
         """
         Construct a bounded polygon for an infinite Voronoi region with proper geometric validation.
 
         CRITICAL FIX: Ensures the generating point is always inside the constructed polygon.
         """
-        from shapely.geometry import LineString
-        from shapely.ops import unary_union
 
         if not region:
             print(f"Empty region for point {point_idx}")
             # Create a fallback small circle around the point
             point = Point(vor.points[point_idx])
             return point.buffer(0.1)
-        
+
         # Handle infinite regions (regions with -1 vertices)
         if -1 in region:
             # This is an infinite region - we need to construct it properly
-            return self._construct_proper_infinite_region(vor, point_idx, region, bbox, country_geom)
+            return self._construct_proper_infinite_region(
+                vor, point_idx, region, bbox, country_geom
+            )
 
         try:
             # Get vertices for this region
@@ -386,9 +394,9 @@ class VoronoiAnalyzer:
                         # Ensure the generating point is inside
                         generating_point = Point(vor.points[point_idx])
                         if isinstance(final_region, Polygon):
-                            if final_region.contains(generating_point) or final_region.touches(
+                            if final_region.contains(
                                 generating_point
-                            ):
+                            ) or final_region.touches(generating_point):
                                 return final_region
                         # If point not inside, create buffer around point
                         return generating_point.buffer(0.1)
@@ -408,12 +416,16 @@ class VoronoiAnalyzer:
             return point.buffer(0.1)
 
     def _construct_proper_infinite_region(
-        self, vor: Voronoi, point_idx: int, region: List[int], bbox: Polygon, country_geom
+        self,
+        vor: Voronoi,
+        point_idx: int,
+        region: List[int],
+        bbox: Polygon,
+        country_geom,
     ) -> Optional[Polygon]:
         """
         Properly construct an infinite Voronoi region using geometric extension.
         """
-        from shapely.geometry import LineString
         from shapely.ops import unary_union
 
         # Get finite vertices in the region
@@ -470,10 +482,14 @@ class VoronoiAnalyzer:
 
                 # The infinite ray direction: perpendicular to the perpendicular bisector
                 bisector_direction = center - other_center
-                bisector_direction = bisector_direction / np.linalg.norm(bisector_direction)
+                bisector_direction = bisector_direction / np.linalg.norm(
+                    bisector_direction
+                )
 
                 # The Voronoi edge is perpendicular to the bisector direction
-                edge_direction = np.array([-bisector_direction[1], bisector_direction[0]])
+                edge_direction = np.array(
+                    [-bisector_direction[1], bisector_direction[0]]
+                )
 
                 # Determine which direction to extend
                 test_point1 = finite_vertex + edge_direction * 0.1
@@ -497,8 +513,12 @@ class VoronoiAnalyzer:
 
                 # Also limit by country bounds
                 bounds = country_geom.bounds
-                max_country_dimension = max(bounds[2] - bounds[0], bounds[3] - bounds[1])
-                conservative_extension = min(conservative_extension, max_country_dimension * 0.2)
+                max_country_dimension = max(
+                    bounds[2] - bounds[0], bounds[3] - bounds[1]
+                )
+                conservative_extension = min(
+                    conservative_extension, max_country_dimension * 0.2
+                )
 
                 # Create conservative ray
                 ray_end = finite_vertex + ray_direction * conservative_extension
@@ -603,7 +623,6 @@ class VoronoiAnalyzer:
             return None, [], points
 
         try:
-
             # Get country geometry
             if hasattr(country_polygon, "iloc"):
                 country_geom = country_polygon.iloc[0].geometry
@@ -624,10 +643,8 @@ class VoronoiAnalyzer:
             # add aux points to the points
             points = np.concatenate([points, aux_points])
 
-            
             # Create Voronoi diagram
             vor = Voronoi(points)
-
 
             for i, region_idx in enumerate(vor.point_region):
                 region = vor.regions[region_idx]
@@ -657,7 +674,9 @@ class VoronoiAnalyzer:
             return vor, voronoi_polygons, points
             # Eliminate overlaps
             if len(voronoi_polygons) == len(capitals_gdf):
-                clean_polygons = self.eliminate_all_overlaps(voronoi_polygons, capitals_gdf, vor)
+                clean_polygons = self.eliminate_all_overlaps(
+                    voronoi_polygons, capitals_gdf, vor
+                )
                 print(f"Generated {len(clean_polygons)} Voronoi regions")
                 return vor, clean_polygons, points
             else:

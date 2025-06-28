@@ -1,1 +1,1 @@
-"""Visualization functionality for maps and data.""" 
+"""Visualization functionality for maps and data."""

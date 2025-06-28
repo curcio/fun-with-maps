@@ -1,15 +1,13 @@
-import os
 from typing import List, Optional, Tuple
 
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import numpy as np
-import requests
 from matplotlib.patches import Patch
 from shapely.geometry import LineString, Polygon
 
-from ..utils.utils import show_plot
 from ..analysis.voronoi_analysis import VoronoiAnalyzer
+from ..utils.utils import show_plot
 
 
 def get_color_palette(num_colors: int) -> List:
@@ -204,7 +202,10 @@ def setup_legends(ax, legend_elements: List[Patch], max_legend_items: int = 15):
 
 
 def visualize_voronoi_with_capitals(
-    country_polygon, capitals_gdf: gpd.GeoDataFrame, country_name: str, show_admin1: bool = True
+    country_polygon,
+    capitals_gdf: gpd.GeoDataFrame,
+    country_name: str,
+    show_admin1: bool = True,
 ) -> Tuple[Optional[plt.Figure], Optional[plt.Axes]]:
     """
     Visualize country with Voronoi diagram based on capital cities.
@@ -260,7 +261,10 @@ def visualize_voronoi_with_capitals(
 
 
 def display_voronoi_diagram(
-    country_polygon, capitals_gdf: gpd.GeoDataFrame, country_name: str, show_admin1: bool = True
+    country_polygon,
+    capitals_gdf: gpd.GeoDataFrame,
+    country_name: str,
+    show_admin1: bool = True,
 ):
     """Create and display Voronoi diagram visualization."""
 
@@ -277,29 +281,30 @@ def display_voronoi_diagram(
 def get_admin1_boundaries(country_name: str) -> Optional[gpd.GeoDataFrame]:
     """
     Fetch admin1 boundaries (states/provinces) for a given country.
-    
+
     Args:
         country_name: Name of the country
-        
+
     Returns:
         GeoDataFrame containing admin1 boundaries or None if not found
     """
     import os
     import zipfile
+
     import requests
-    
+
     # Try to load admin-1 data
     data_paths = [
-        "data/ne_10m_admin_1_states_provinces", 
-        "data/natural_earth/ne_10m_admin_1_states_provinces"
+        "data/ne_10m_admin_1_states_provinces",
+        "data/natural_earth/ne_10m_admin_1_states_provinces",
     ]
-    
+
     admin1_url = "https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_1_states_provinces.zip"
-    
+
     for data_path in data_paths:
         shp_path = f"{data_path}/ne_10m_admin_1_states_provinces.shp"
         zip_path = f"{data_path}.zip"
-        
+
         # Try to extract data if needed
         if not os.path.exists(shp_path):
             if os.path.exists(zip_path):
@@ -309,24 +314,26 @@ def get_admin1_boundaries(country_name: str) -> Optional[gpd.GeoDataFrame]:
                 break
             else:
                 # Try to download the data
-                print(f"Admin1 data not found. Attempting to download from Natural Earth...")
+                print(
+                    "Admin1 data not found. Attempting to download from Natural Earth..."
+                )
                 try:
                     os.makedirs(os.path.dirname(zip_path), exist_ok=True)
-                    
+
                     response = requests.get(admin1_url, stream=True)
                     response.raise_for_status()
-                    
-                    with open(zip_path, 'wb') as f:
+
+                    with open(zip_path, "wb") as f:
                         for chunk in response.iter_content(chunk_size=8192):
                             f.write(chunk)
-                    
+
                     print(f"Successfully downloaded: {zip_path}")
-                    
+
                     # Extract the downloaded data
                     with zipfile.ZipFile(zip_path, "r") as zip_ref:
                         zip_ref.extractall(data_path)
                     break
-                    
+
                 except Exception as e:
                     print(f"Failed to download admin1 data: {e}")
                     continue
@@ -335,26 +342,38 @@ def get_admin1_boundaries(country_name: str) -> Optional[gpd.GeoDataFrame]:
     else:
         print("Could not find or download admin1 boundary data")
         return None
-    
+
     try:
         # Read and filter data
         print(f"Loading admin1 boundaries for {country_name}...")
         gdf = gpd.read_file(shp_path)
-        
+
         # Try different name columns to match the country
-        name_cols = ["admin", "ADMIN", "ADM0_A3", "NAME_0", "SOVEREIGNT", "NAME_EN", "ADM0NAME"]
+        name_cols = [
+            "admin",
+            "ADMIN",
+            "ADM0_A3",
+            "NAME_0",
+            "SOVEREIGNT",
+            "NAME_EN",
+            "ADM0NAME",
+        ]
         country_data = None
-        
+
         for col in name_cols:
             if col in gdf.columns:
-                filtered = gdf[gdf[col].str.contains(country_name, case=False, na=False)]
+                filtered = gdf[
+                    gdf[col].str.contains(country_name, case=False, na=False)
+                ]
                 if not filtered.empty:
                     country_data = filtered
-                    print(f"Found {len(country_data)} admin1 regions using column '{col}'")
+                    print(
+                        f"Found {len(country_data)} admin1 regions using column '{col}'"
+                    )
                     break
-        
+
         return country_data
-        
+
     except Exception as e:
         print(f"Error loading admin1 boundaries: {e}")
         return None
@@ -363,7 +382,7 @@ def get_admin1_boundaries(country_name: str) -> Optional[gpd.GeoDataFrame]:
 def plot_admin1_limits(ax, admin1_gdf: gpd.GeoDataFrame, alpha: float = 0.3):
     """
     Plot admin1 polygon limits (state/province boundaries) on the given axes.
-    
+
     Args:
         ax: Matplotlib axes to plot on
         admin1_gdf: GeoDataFrame containing admin1 boundaries
@@ -372,15 +391,15 @@ def plot_admin1_limits(ax, admin1_gdf: gpd.GeoDataFrame, alpha: float = 0.3):
     if admin1_gdf is None or admin1_gdf.empty:
         print("No admin1 boundaries to plot")
         return
-    
+
     # Plot admin1 boundaries
     admin1_gdf.boundary.plot(
         ax=ax,
-        color="purple", 
+        color="purple",
         linewidth=1.5,
         alpha=alpha,
         linestyle="--",
-        label=f"Admin1 Boundaries ({len(admin1_gdf)})"
+        label=f"Admin1 Boundaries ({len(admin1_gdf)})",
     )
-    
+
     print(f"Added {len(admin1_gdf)} admin1 boundary lines to plot")

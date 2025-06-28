@@ -2,7 +2,10 @@ from unittest.mock import patch
 
 import pytest
 
-from fun_with_maps.core.closest_country import analyze_point_location, find_closest_country_to_point
+from fun_with_maps.core.closest_country import (
+    analyze_point_location,
+    find_closest_country_to_point,
+)
 from fun_with_maps.core.country_analysis import get_country_info, get_country_polygon
 from fun_with_maps.core.point_generation import generate_random_points_in_polygon
 from fun_with_maps.visualization.visualization import visualize_country_polygon

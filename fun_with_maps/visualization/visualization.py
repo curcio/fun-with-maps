@@ -1,5 +1,6 @@
+from typing import Optional, Tuple
+
 import matplotlib.pyplot as plt
-from typing import List, Optional, Tuple, Dict, Any
 
 from ..core.closest_country import find_multiple_closest_countries
 from ..utils.utils import show_plot
@@ -9,11 +10,11 @@ class Visualizer:
     """
     A class for managing all visualization operations with consistent styling and configuration.
     """
-    
+
     def __init__(self, style: str = "default", figsize: Tuple[int, int] = (12, 10)):
         """
         Initialize the Visualizer.
-        
+
         Args:
             style: Default matplotlib style to use
             figsize: Default figure size
@@ -26,35 +27,63 @@ class Visualizer:
                 "country_edge": "darkgreen",
                 "points": "red",
                 "background": "lightblue",
-                "closest_countries": ["red", "orange", "yellow", "lightgreen", "lightblue"]
+                "closest_countries": [
+                    "red",
+                    "orange",
+                    "yellow",
+                    "lightgreen",
+                    "lightblue",
+                ],
             },
             "modern": {
                 "country": "#3498db",
                 "country_edge": "#2c3e50",
                 "points": "#e74c3c",
                 "background": "#ecf0f1",
-                "closest_countries": ["#e74c3c", "#f39c12", "#f1c40f", "#2ecc71", "#3498db"]
+                "closest_countries": [
+                    "#e74c3c",
+                    "#f39c12",
+                    "#f1c40f",
+                    "#2ecc71",
+                    "#3498db",
+                ],
             },
             "dark": {
                 "country": "#34495e",
                 "country_edge": "#2c3e50",
                 "points": "#e67e22",
                 "background": "#2c3e50",
-                "closest_countries": ["#e74c3c", "#f39c12", "#f1c40f", "#27ae60", "#3498db"]
-            }
+                "closest_countries": [
+                    "#e74c3c",
+                    "#f39c12",
+                    "#f1c40f",
+                    "#27ae60",
+                    "#3498db",
+                ],
+            },
         }
-        self.current_colors = self.color_schemes[style] if style in self.color_schemes else self.color_schemes["default"]
-        
+        self.current_colors = (
+            self.color_schemes[style]
+            if style in self.color_schemes
+            else self.color_schemes["default"]
+        )
+
     def set_style(self, style: str):
         """Set the visualization style."""
         if style in self.color_schemes:
             self.style = style
             self.current_colors = self.color_schemes[style]
         else:
-            print(f"Unknown style '{style}'. Available styles: {list(self.color_schemes.keys())}")
-    
-    def visualize_country_polygon(self, country_gdf, country_name: Optional[str] = None, 
-                                figsize: Optional[Tuple[int, int]] = None):
+            print(
+                f"Unknown style '{style}'. Available styles: {list(self.color_schemes.keys())}"
+            )
+
+    def visualize_country_polygon(
+        self,
+        country_gdf,
+        country_name: Optional[str] = None,
+        figsize: Optional[Tuple[int, int]] = None,
+    ):
         """
         Visualize a specific country's polygon.
 
@@ -72,11 +101,11 @@ class Visualizer:
 
         # Plot the country
         country_gdf.plot(
-            ax=ax, 
-            color=self.current_colors["country"], 
-            edgecolor=self.current_colors["country_edge"], 
-            linewidth=2, 
-            alpha=0.7
+            ax=ax,
+            color=self.current_colors["country"],
+            edgecolor=self.current_colors["country_edge"],
+            linewidth=2,
+            alpha=0.7,
         )
 
         # Get country name for title
@@ -102,8 +131,13 @@ class Visualizer:
         plt.tight_layout()
         show_plot()
 
-    def visualize_point_and_closest_countries(self, world_gdf, point, n_countries: int = 3, 
-                                            figsize: Optional[Tuple[int, int]] = None):
+    def visualize_point_and_closest_countries(
+        self,
+        world_gdf,
+        point,
+        n_countries: int = 3,
+        figsize: Optional[Tuple[int, int]] = None,
+    ):
         """
         Visualize a point and its closest countries on the world map.
 
@@ -119,7 +153,9 @@ class Visualizer:
             lon, lat = point.x, point.y
 
         # Get closest countries
-        closest_countries = find_multiple_closest_countries(world_gdf, point, n_countries)
+        closest_countries = find_multiple_closest_countries(
+            world_gdf, point, n_countries
+        )
 
         if not closest_countries:
             print("No closest countries found")
@@ -204,8 +240,13 @@ class Visualizer:
         plt.tight_layout()
         show_plot()
 
-    def visualize_polygon_with_points(self, polygon_gdf, points_gdf, title: Optional[str] = None, 
-                                    figsize: Optional[Tuple[int, int]] = None):
+    def visualize_polygon_with_points(
+        self,
+        polygon_gdf,
+        points_gdf,
+        title: Optional[str] = None,
+        figsize: Optional[Tuple[int, int]] = None,
+    ):
         """
         Visualize a polygon with random points inside it.
 
@@ -255,11 +296,15 @@ class Visualizer:
         plt.tight_layout()
         show_plot(
             title=title.replace(" ", "_"),
-            description=f"Visualization of {len(points_gdf)} random points within polygon boundaries"
+            description=f"Visualization of {len(points_gdf)} random points within polygon boundaries",
         )
 
-    def visualize_world_map(self, world_gdf, title: str = "World Political Map", 
-                          figsize: Optional[Tuple[int, int]] = None):
+    def visualize_world_map(
+        self,
+        world_gdf,
+        title: str = "World Political Map",
+        figsize: Optional[Tuple[int, int]] = None,
+    ):
         """
         Visualize the world political map.
 
@@ -296,11 +341,19 @@ class Visualizer:
         ax.set_ylim(-90, 90)
 
         plt.tight_layout()
-        show_plot(title="World_Map", description="Global political boundaries visualization")
+        show_plot(
+            title="World_Map", description="Global political boundaries visualization"
+        )
 
-    def create_country_visualization_with_colors(self, world_gdf, country_polygon, points, 
-                                               unique_countries, country_name: str, 
-                                               figsize: Optional[Tuple[int, int]] = None):
+    def create_country_visualization_with_colors(
+        self,
+        world_gdf,
+        country_polygon,
+        points,
+        unique_countries,
+        country_name: str,
+        figsize: Optional[Tuple[int, int]] = None,
+    ):
         """
         Create a colored visualization showing points colored by their closest countries.
         Also highlights the closest countries themselves on the map.
@@ -321,7 +374,9 @@ class Visualizer:
                 break
 
         # Plot world map in light gray
-        world_gdf.plot(ax=ax, color="lightgray", edgecolor="white", linewidth=0.5, alpha=0.3)
+        world_gdf.plot(
+            ax=ax, color="lightgray", edgecolor="white", linewidth=0.5, alpha=0.3
+        )
 
         # Create color mapping for unique countries
         colors = plt.cm.Set1(range(len(unique_countries)))
@@ -357,9 +412,9 @@ class Visualizer:
             )
 
         # Plot points colored by closest country
-        if 'closest_country' in points.columns:
+        if "closest_country" in points.columns:
             for country in unique_countries:
-                country_points = points[points['closest_country'] == country]
+                country_points = points[points["closest_country"] == country]
                 if not country_points.empty:
                     country_points.plot(
                         ax=ax,
@@ -381,15 +436,15 @@ class Visualizer:
         else:
             # Fallback: get bounds from the first geometry
             bounds = country_polygon.iloc[0].geometry.bounds
-        
+
         minx, miny, maxx, maxy = bounds
-        
+
         # Add margin around the country (10% of the country's size)
         width = maxx - minx
         height = maxy - miny
         margin_x = width * 0.1
         margin_y = height * 0.1
-        
+
         ax.set_xlim(minx - margin_x, maxx + margin_x)
         ax.set_ylim(miny - margin_y, maxy + margin_y)
 
@@ -407,7 +462,7 @@ class Visualizer:
         plt.tight_layout()
         show_plot(
             title=f"{country_name}_with_Points_Colored_by_Closest_Country",
-            description=f"Points within {country_name} colored by their closest neighboring country"
+            description=f"Points within {country_name} colored by their closest neighboring country",
         )
 
 
@@ -418,16 +473,24 @@ def visualize_country_polygon(country_gdf, country_name=None, figsize=(10, 8)):
     return visualizer.visualize_country_polygon(country_gdf, country_name, figsize)
 
 
-def visualize_point_and_closest_countries(world_gdf, point, n_countries=3, figsize=(15, 10)):
+def visualize_point_and_closest_countries(
+    world_gdf, point, n_countries=3, figsize=(15, 10)
+):
     """Backward compatibility wrapper."""
     visualizer = Visualizer()
-    return visualizer.visualize_point_and_closest_countries(world_gdf, point, n_countries, figsize)
+    return visualizer.visualize_point_and_closest_countries(
+        world_gdf, point, n_countries, figsize
+    )
 
 
-def visualize_polygon_with_points(polygon_gdf, points_gdf, title=None, figsize=(12, 10)):
+def visualize_polygon_with_points(
+    polygon_gdf, points_gdf, title=None, figsize=(12, 10)
+):
     """Backward compatibility wrapper."""
     visualizer = Visualizer()
-    return visualizer.visualize_polygon_with_points(polygon_gdf, points_gdf, title, figsize)
+    return visualizer.visualize_polygon_with_points(
+        polygon_gdf, points_gdf, title, figsize
+    )
 
 
 def visualize_world_map(world_gdf, title="World Political Map", figsize=(15, 10)):
@@ -436,7 +499,11 @@ def visualize_world_map(world_gdf, title="World Political Map", figsize=(15, 10)
     return visualizer.visualize_world_map(world_gdf, title, figsize)
 
 
-def create_country_visualization_with_colors(world_gdf, country_polygon, points, unique_countries, country_name, figsize=(15, 12)):
+def create_country_visualization_with_colors(
+    world_gdf, country_polygon, points, unique_countries, country_name, figsize=(15, 12)
+):
     """Backward compatibility wrapper."""
     visualizer = Visualizer()
-    return visualizer.create_country_visualization_with_colors(world_gdf, country_polygon, points, unique_countries, country_name, figsize)
+    return visualizer.create_country_visualization_with_colors(
+        world_gdf, country_polygon, points, unique_countries, country_name, figsize
+    )

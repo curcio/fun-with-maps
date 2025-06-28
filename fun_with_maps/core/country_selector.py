@@ -55,7 +55,9 @@ class CountrySelector:
 
         # Title label
         title_label = ttk.Label(
-            main_frame, text="🌍 Select a Country to Analyze", font=("Arial", 14, "bold")
+            main_frame,
+            text="🌍 Select a Country to Analyze",
+            font=("Arial", 14, "bold"),
         )
         title_label.grid(row=0, column=0, columnspan=2, pady=(0, 20))
 

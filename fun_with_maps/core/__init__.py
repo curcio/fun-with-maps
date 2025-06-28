@@ -1,1 +1,1 @@
-"""Core functionality for map and country operations.""" 
+"""Core functionality for map and country operations."""

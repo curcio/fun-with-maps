@@ -26,7 +26,6 @@ from fun_with_maps.core.map_fetcher import fetch_world_map
 @click.group()
 def cli():
     """Geographic data CLI tool."""
-    pass
 
 
 @cli.command("list-countries")

@@ -403,28 +403,26 @@ footer {
         padding: 10px;
         min-height: calc(100vh - 150px);
     }
-    
+
     header h1 {
         font-size: 2rem;
     }
-    
+
     .game-section {
         padding: 20px;
         max-width: 100%;
     }
-    
+
     .input-section {
         flex-direction: column;
     }
-    
+
     #submit-btn {
         width: 100%;
     }
-    
+
     .box {
         width: 20px;
         height: 20px;
     }
 }
-
- 
