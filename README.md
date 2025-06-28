@@ -39,6 +39,24 @@ pip install -e ".[dev]"
 pre-commit install
 ```
 
+### Installing with uv
+
+[uv](https://github.com/astral-sh/uv) is a drop-in replacement for `pip` that
+speeds up dependency installation. Once `uv` itself is installed you can install
+the project requirements with:
+
+```bash
+pip install uv  # one-time installation
+./scripts/install_with_uv.sh
+```
+
+For development dependencies use:
+
+```bash
+./scripts/install_with_uv.sh -e .[dev]
+pre-commit install
+```
+
 ## Quick Start
 
 ### Using the Command Line Interface
