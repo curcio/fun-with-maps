@@ -43,12 +43,22 @@ pre-commit install
 
 ### Using the Command Line Interface
 
-```bash
-# Interactive main script
-python scripts/main.py
+After installing with `pip install -e .`, the ``fun-with-maps-cli`` command
+provides access to all features. You can still run the interactive script with
+``python scripts/main.py`` if desired.
 
-# CLI tool for specific operations
-python scripts/cli.py get-admin1-capitals "Argentina"
+```bash
+# Show available commands
+fun-with-maps-cli --help
+
+# Download the world map
+fun-with-maps-cli fetch-world-map --output world.geojson
+
+# List countries from a map file
+fun-with-maps-cli list-countries world.geojson
+
+# Retrieve admin‑1 capitals
+fun-with-maps-cli get-admin1-capitals "Argentina"
 ```
 
 ### Using as a Python Package
@@ -161,7 +171,7 @@ fun-with-maps/
 from fun_with_maps.core.map_fetcher import fetch_world_map
 world_map = fetch_world_map(resolution="medium")
 
-# Country analysis  
+# Country analysis
 from fun_with_maps.core.country_analysis import get_country_polygon
 country = get_country_polygon(world_map, "Germany")
 
@@ -170,7 +180,7 @@ from fun_with_maps.core.point_generation import generate_random_points_in_polygo
 points = generate_random_points_in_polygon(country, count=1000)
 
 # Closest country detection
-from fun_with_maps.core.closest_country import find_closest_countries  
+from fun_with_maps.core.closest_country import find_closest_countries
 closest = find_closest_countries(world_map, points)
 ```
 
@@ -194,6 +204,6 @@ from fun_with_maps.visualization.visualization import visualize_country_polygon
 visualize_country_polygon(country, "Germany")
 
 # Voronoi visualization
-from fun_with_maps.visualization.voronoi_visualization import display_voronoi_diagram  
+from fun_with_maps.visualization.voronoi_visualization import display_voronoi_diagram
 display_voronoi_diagram(country, capitals, "Germany")
 ```
