@@ -6,8 +6,13 @@ This module provides a GUI interface for selecting a country from a list
 of available countries in the world map data.
 """
 
-import tkinter as tk
-from tkinter import messagebox, ttk
+try:
+    import tkinter as tk
+    from tkinter import messagebox, ttk
+except Exception:  # pragma: no cover - optional dependency
+    tk = None
+    messagebox = None
+    ttk = None
 from typing import List, Optional
 
 
