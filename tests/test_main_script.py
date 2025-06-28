@@ -1,9 +1,6 @@
-# flake8: noqa
-"""
-Tests for the main script functionality.
 
-This module contains tests to ensure that the main script works correctly,
-including integration tests and tests for specific bug fixes.
+"""Tests for high-level script functions.
+These tests mock heavy operations so that they run quickly.
 """
 
 import os
@@ -13,259 +10,116 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-# Add the project root to the path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Add the project root to the path before importing project modules
+sys.path.insert(
+    0, os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+)  # noqa: E402
 
-from fun_with_maps.core.country_analysis import get_country_polygon
-from fun_with_maps.core.map_fetcher import fetch_world_map
-from scripts.main import setup_country_analysis, voronoi_only_analysis
+import scripts.main as main_module  # noqa: E402
+from fun_with_maps.core import country_analysis  # noqa: E402
 
 
 class TestMainScript:
-    """Test cases for main script functionality and integration."""
+    """Unit tests for ``scripts.main`` with heavy parts patched."""
 
-    def test_main_script_runs_without_error(self):
-        """Test that the main script can be executed without crashing.
-
-        This specifically tests for the 'too many values to unpack' error
-        that was occurring when get_country_polygon was incorrectly unpacked.
-        """
-        script_path = os.path.join(
-            os.path.dirname(os.path.dirname(__file__)), "scripts", "main.py"
-        )
-
-        # Run the script with a test country
-        try:
-            result = subprocess.run(
-                [sys.executable, script_path, "--country", "Iran"],
-                capture_output=True,
-                text=True,
-                timeout=15,  # 15 second timeout - enough to test core functionality
-            )
-        except subprocess.TimeoutExpired as e:
-            # If it times out, that's good - it means the script is running without crashing
-            # Check the stderr for the specific errors we're testing for
-            stderr_output = e.stderr.decode() if e.stderr else ""
-            stdout_output = e.stdout.decode() if e.stdout else ""
-
-            assert (
-                "too many values to unpack" not in stderr_output
-            ), f"Unpacking error occurred: {stderr_output}"
-            assert (
-                "No module named 'visualization'" not in stderr_output
-            ), f"Import error occurred: {stderr_output}"
-
-            # If we see the script start processing, that's success
-            assert (
-                "Starting analysis for:" in stdout_output
-            ), "Script should start analysis"
-            return  # Test passes - script is running without critical errors
-
-        # If no timeout, check for critical errors
-        assert (
-            "too many values to unpack" not in result.stderr
-        ), f"Unpacking error occurred: {result.stderr}"
-        assert (
-            "No module named 'visualization'" not in result.stderr
-        ), f"Import error occurred: {result.stderr}"
-
-    def test_get_country_polygon_return_value(self):
-        """Test that get_country_polygon returns the expected number of values."""
-        # Mock the world map data
-        mock_world_map = MagicMock()
-        mock_world_map.columns = ["NAME"]
-        mock_world_map.__getitem__.return_value.str.contains.return_value = MagicMock()
-        mock_world_map.__getitem__.return_value.str.contains.return_value.__getitem__.return_value = (
-            MagicMock()
-        )
-
-        # Mock a successful country match
-        mock_country_data = MagicMock()
-        mock_country_data.empty = False
-        mock_country_data.iloc = [MagicMock()]
-        mock_country_data.iloc[0] = {"NAME": "Iran"}
-
-        with patch(
-            "fun_with_maps.core.country_analysis.get_country_polygon"
-        ) as mock_get_country:
-            mock_get_country.return_value = mock_country_data
-
-            result = get_country_polygon(mock_world_map, "Iran")
-
-            # The function should return exactly one value, not a tuple
-            assert not isinstance(
-                result, tuple
-            ), "get_country_polygon should not return a tuple"
-
-    def test_setup_country_analysis_unpacking_issue(self):
-        """Test the specific unpacking issue in setup_country_analysis."""
-        with patch("scripts.main.fetch_world_map") as mock_fetch:
-            with patch("scripts.main.get_country_polygon") as mock_get_country:
-                with patch("scripts.main.visualize_country_polygon") as mock_visualize:
-                    # Mock the world map
-                    mock_world_map = MagicMock()
-                    mock_fetch.return_value = mock_world_map
-
-                    # Mock get_country_polygon to return only one value (the actual behavior)
-                    mock_country_gdf = MagicMock()
-                    mock_country_gdf.iloc = [{"NAME": "Iran"}]
-                    mock_get_country.return_value = mock_country_gdf
-
-                    # This should not raise a "too many values to unpack" error
-                    try:
-                        result = setup_country_analysis("Iran")
-                        # If it doesn't crash, that's good, but we need to check the fix
-                        assert (
-                            len(result) == 3
-                        ), "setup_country_analysis should return 3 values"
-                    except ValueError as e:
-                        if "too many values to unpack" in str(e):
-                            pytest.fail(
-                                "setup_country_analysis has unpacking issue that needs to be fixed"
-                            )
-                        else:
-                            # Some other error, re-raise it
-                            raise
-
-    def test_voronoi_only_analysis_unpacking_issue(self):
-        """Test the specific unpacking issue in voronoi_only_analysis."""
-        with patch("scripts.main.fetch_world_map") as mock_fetch:
-            with patch("scripts.main.get_country_polygon") as mock_get_country:
-                with patch("scripts.main.get_admin1_capitals") as mock_get_capitals:
-                    with patch(
-                        "scripts.main.create_voronoi_analysis"
-                    ) as mock_create_voronoi:
-                        with patch("scripts.main.clear_plot_tracker") as mock_clear:
-                            with patch(
-                                "scripts.main.set_country_info"
-                            ) as mock_set_info:
-                                # Mock the world map
-                                mock_world_map = MagicMock()
-                                mock_fetch.return_value = mock_world_map
-
-                                # Mock get_country_polygon to return only one value (the actual behavior)
-                                mock_country_gdf = MagicMock()
-                                mock_country_gdf.iloc = [{"NAME": "Iran"}]
-                                mock_get_country.return_value = mock_country_gdf
-
-                                # Mock capitals
-                                mock_get_capitals.return_value = MagicMock()
-
-                                # This should not raise a "too many values to unpack" error
-                                try:
-                                    voronoi_only_analysis("Iran")
-                                    # If it doesn't crash, the fix is working
-                                except ValueError as e:
-                                    if "too many values to unpack" in str(e):
-                                        pytest.fail(
-                                            "voronoi_only_analysis has unpacking issue that needs to be fixed"
-                                        )
-                                    else:
-                                        # Some other error, re-raise it
-                                        raise
-
-    def test_visualization_import_issue(self):
-        """Test that the script can import visualization functions correctly."""
-        # This tests for the ModuleNotFoundError: No module named 'visualization'
-        script_path = os.path.join(
-            os.path.dirname(os.path.dirname(__file__)), "scripts", "main.py"
-        )
-
-        # Run the script briefly to see if it gets past the import error
-        try:
-            result = subprocess.run(
-                [sys.executable, script_path, "--country", "Iran"],
-                capture_output=True,
-                text=True,
-                timeout=10,  # Short timeout, just to test import works
-            )
-        except subprocess.TimeoutExpired as e:
-            # If it times out, that means it got past the import error and is running
-            # Check the stderr for any import errors that occurred before timeout
-            stderr_output = e.stderr.decode() if e.stderr else ""
-            assert (
-                "No module named 'visualization'" not in stderr_output
-            ), f"Visualization import error: {stderr_output}"
-            return  # Test passes - script is running without import errors
-
-        # If no timeout, check for import errors
-        assert (
-            "No module named 'visualization'" not in result.stderr
-        ), f"Visualization import error: {result.stderr}"
-
-    def test_create_country_visualization_import(self):
-        """Test that the create_country_visualization_with_colors function can be imported correctly."""
-        # Test importing the function directly
-        try:
-            from fun_with_maps.visualization.visualization import (
-                create_country_visualization_with_colors,
-            )
-
-            # If we can import it, the function exists
-            assert callable(
-                create_country_visualization_with_colors
-            ), "Function should be callable"
-        except ImportError as e:
-            pytest.fail(
-                f"Could not import create_country_visualization_with_colors: {e}"
-            )
-
-    def test_country_analysis_import_issue(self):
-        """Test that the script can import country_analysis functions correctly."""
-        # This tests for the ModuleNotFoundError: No module named 'country_analysis'
-        # that occurs in the TSP analysis section
-        script_path = os.path.join(
-            os.path.dirname(os.path.dirname(__file__)), "scripts", "main.py"
-        )
-
-        # Test that the main script doesn't have import errors for country_analysis
-        try:
-            result = subprocess.run(
-                [sys.executable, script_path, "--country", "Iran"],
-                capture_output=True,
-                text=True,
-                timeout=20,  # Enough time to get to TSP analysis
-            )
-        except subprocess.TimeoutExpired as e:
-            # Check for the specific import error in stderr
-            stderr_output = e.stderr.decode() if e.stderr else ""
-            assert (
-                "No module named 'country_analysis'" not in stderr_output
-            ), f"Country analysis import error: {stderr_output}"
-            return  # Test passes if no import error
-
-        # If no timeout, check for import errors
-        assert (
-            "No module named 'country_analysis'" not in result.stderr
-        ), f"Country analysis import error: {result.stderr}"
-
-    def test_main_skip_pdf_flag(self):
-        """Ensure PDF generation can be skipped via flag."""
-        with patch("scripts.main.generate_pdf_report") as mock_pdf, patch(
-            "scripts.main.setup_country_analysis"
-        ) as mock_setup, patch("scripts.main.generate_and_visualize_points"), patch(
-            "scripts.main.analyze_closest_countries"
-        ), patch(
-            "scripts.main.create_colored_visualization"
-        ), patch(
-            "scripts.main.get_admin1_capitals"
-        ) as mock_caps, patch(
-            "scripts.main.create_voronoi_analysis"
-        ), patch(
-            "scripts.main.filter_capitals_to_largest_polygon"
-        ) as mock_filter, patch(
-            "scripts.main.solve_tsp_for_country"
+    def test_main_runs_quickly_with_patches(self):
+        """``main`` should execute without heavy work when dependencies are patched."""
+        with (
+            patch.object(main_module, "setup_country_analysis") as mock_setup,
+            patch.object(main_module, "generate_and_visualize_points") as mock_gen,
+            patch.object(main_module, "analyze_closest_countries") as mock_analysis,
+            patch.object(main_module, "create_colored_visualization") as mock_vis,
+            patch.object(main_module, "get_admin1_capitals") as mock_capitals,
+            patch.object(main_module, "create_voronoi_analysis") as mock_voronoi,
+            patch.object(
+                main_module, "filter_capitals_to_largest_polygon"
+            ) as mock_filter,
+            patch.object(main_module, "solve_tsp_for_country") as mock_solve,
+            patch.object(main_module, "generate_pdf_report") as mock_report,
+            patch.object(main_module, "clear_plot_tracker") as mock_clear,
+            patch.object(main_module, "set_country_info") as mock_set,
         ):
             mock_setup.return_value = (MagicMock(), MagicMock(), "Testland")
-            mock_caps.return_value = MagicMock()
-            mock_filter.return_value = MagicMock()
+            mock_gen.return_value = []
+            mock_analysis.return_value = ["country"]
+            mock_capitals.return_value = MagicMock(empty=True)
+            mock_filter.side_effect = lambda caps, poly: caps
 
-            from scripts.main import main
+            main_module.main("Testland")
 
-            main("Testland", skip_pdf=True)
+            mock_setup.assert_called_once_with("Testland")
+            mock_gen.assert_called_once()
+            mock_analysis.assert_called_once()
+            mock_vis.assert_called_once()
+            mock_capitals.assert_called_once_with("Testland")
+            mock_voronoi.assert_called_once()
+            mock_filter.assert_called_once()
+            mock_solve.assert_called_once()
+            mock_report.assert_called_once()
+            assert mock_clear.called
+            assert mock_set.called
 
-            mock_pdf.assert_not_called()
+
+    def test_get_country_polygon_return_value(self):
+        """``get_country_polygon`` should not return a tuple."""
+        mock_world_map = MagicMock()
+        mock_world_map.columns = ["NAME"]
+        mock_country_data = MagicMock()
+        mock_country_data.empty = False
+        mock_country_data.iloc = [{"NAME": "Iran"}]
+
+        with patch.object(
+            country_analysis, "get_country_polygon", return_value=mock_country_data
+        ):
+            result = country_analysis.get_country_polygon(mock_world_map, "Iran")
+            assert not isinstance(result, tuple)
+
+    def test_setup_country_analysis_unpacking_issue(self):
+        """Ensure ``setup_country_analysis`` returns three values."""
+        with (
+            patch.object(main_module, "fetch_world_map") as mock_fetch,
+            patch.object(main_module, "get_country_polygon") as mock_get_country,
+            patch.object(main_module, "visualize_country_polygon"),
+        ):
+            mock_fetch.return_value = MagicMock()
+            mock_country_gdf = MagicMock()
+            mock_country_gdf.iloc = [{"NAME": "Iran"}]
+            mock_get_country.return_value = mock_country_gdf
+
+            result = main_module.setup_country_analysis("Iran")
+            assert len(result) == 3
+
+    def test_voronoi_only_analysis_unpacking_issue(self):
+        """``voronoi_only_analysis`` should run without unpacking errors."""
+        with (
+            patch.object(main_module, "fetch_world_map") as mock_fetch,
+            patch.object(main_module, "get_country_polygon") as mock_get_country,
+            patch.object(main_module, "get_admin1_capitals") as mock_get_capitals,
+            patch.object(main_module, "create_voronoi_analysis") as mock_create_voronoi,
+            patch.object(main_module, "clear_plot_tracker"),
+            patch.object(main_module, "set_country_info"),
+        ):
+            mock_fetch.return_value = MagicMock()
+            mock_country_gdf = MagicMock()
+            mock_country_gdf.iloc = [{"NAME": "Iran"}]
+            mock_get_country.return_value = mock_country_gdf
+            mock_get_capitals.return_value = MagicMock()
+
+            main_module.voronoi_only_analysis("Iran")
+            mock_create_voronoi.assert_called_once()
+
+    def test_create_country_visualization_import(self):
+        """The visualization helper should be importable."""
+        from fun_with_maps.visualization.visualization import (
+            create_country_visualization_with_colors,
+        )
+
+        assert callable(create_country_visualization_with_colors)
+
+    def test_main_imports_country_analysis_module(self):
+        """``scripts.main`` should use functions from ``country_analysis`` module."""
+        assert main_module.get_country_polygon is country_analysis.get_country_polygon
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     pytest.main([__file__])

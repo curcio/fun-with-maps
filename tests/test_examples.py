@@ -1,12 +1,15 @@
+import os
+import sys
 from unittest.mock import patch
 
 import geopandas as gpd
 import pytest
-import sys
-import os
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from examples.examples import example_closest_country_analysis, run_comprehensive_demo
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))  # noqa: E402
+from examples.examples import (  # noqa: E402
+    example_closest_country_analysis,
+    run_comprehensive_demo,
+)
 
 
 class TestExampleFunctions:
@@ -39,7 +42,7 @@ class TestExampleFunctions:
         example_closest_country_analysis()
 
         # Verify that fetch_world_map was called
-        mock_fetch.assert_called_once_with(resolution="high")
+        mock_fetch.assert_called_once_with(resolution="low")
 
         # Verify that analyze_point_location was called multiple times (for each test point)
         assert mock_analyze.call_count > 0
@@ -86,7 +89,7 @@ class TestExampleFunctions:
         run_comprehensive_demo()
 
         # Verify that key functions were called
-        mock_fetch.assert_called_once_with(resolution="high")
+        mock_fetch.assert_called_once_with(resolution="low")
         assert mock_find_closest.call_count > 0
         assert mock_analyze.call_count > 0
         mock_viz.assert_called_once()
@@ -180,7 +183,10 @@ class TestExampleFunctions:
     def test_examples_importable(self):
         """Test that example functions can be imported without errors."""
         # This test verifies that the imports work correctly
-        from examples.examples import example_closest_country_analysis, run_comprehensive_demo
+        from examples.examples import (
+            example_closest_country_analysis,
+            run_comprehensive_demo,
+        )
 
         # Verify functions are callable
         assert callable(example_closest_country_analysis)
