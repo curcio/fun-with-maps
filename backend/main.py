@@ -2,7 +2,7 @@ import random
 from pathlib import Path
 
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -70,4 +70,15 @@ async def read_index(request: Request):
             "game_data": game_data,
             "image_path": None,
         },
+    )
+
+
+@app.get("/new-game")
+async def new_game():
+    """Get a new random country and hints for a fresh game."""
+    country, hints = choose_country()
+    load_data()  # Ensure data is loaded
+
+    return JSONResponse(
+        {"country": country, "hints": hints, "valid_countries": available_countries}
     )

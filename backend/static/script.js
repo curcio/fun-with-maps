@@ -1,18 +1,30 @@
 // Game state management
 class CountryGuessingGame {
     constructor() {
-        // Static list of 10 countries for validation (iteration 3)
-        this.validCountries = [
+        // Static fallback list of countries for validation
+        this.staticValidCountries = [
             'iran', 'persia', 'united states', 'usa', 'america',
             'france', 'germany', 'japan', 'china', 'brazil',
             'canada', 'australia', 'india', 'russia', 'italy'
         ];
 
         const data = window.GAME_DATA || {};
-        // Correct answer and validation list provided by backend
-        this.validCountries = data.valid_countries || this.validCountries;
+        console.log('Game data received:', data);
+
+        // Normalize country names to lowercase for comparison
+        this.validCountries = data.valid_countries ?
+            data.valid_countries.map(country => country.toLowerCase()) :
+            this.staticValidCountries;
+
         this.correctAnswer = (data.country || 'iran').toLowerCase();
-        this.alternativeAnswers = [];
+
+        // Set up alternative answers for common country name variations
+        this.alternativeAnswers = this.getAlternativeAnswers(this.correctAnswer);
+
+        console.log('Correct answer:', this.correctAnswer);
+        console.log('Alternative answers:', this.alternativeAnswers);
+        console.log('Valid countries:', this.validCountries.slice(0, 10), '...');
+
         this.feedbackEl = null;
 
         // Game state
@@ -24,6 +36,27 @@ class CountryGuessingGame {
 
         // Initialize the game
         this.init();
+    }
+
+    getAlternativeAnswers(correctAnswer) {
+        // Common alternative names for countries
+        const alternatives = {
+            'united states': ['usa', 'america', 'us', 'united states of america'],
+            'united kingdom': ['uk', 'britain', 'great britain', 'england'],
+            'russia': ['russian federation'],
+            'iran': ['persia'],
+            'south korea': ['korea', 'republic of korea'],
+            'north korea': ['korea', 'democratic people\'s republic of korea'],
+            'china': ['people\'s republic of china', 'prc'],
+            'congo': ['democratic republic of congo', 'drc'],
+            'myanmar': ['burma'],
+            'czech republic': ['czechia'],
+            'macedonia': ['north macedonia'],
+            'swaziland': ['eswatini'],
+            'ivory coast': ['cote d\'ivoire'],
+        };
+
+        return alternatives[correctAnswer] || [];
     }
 
     init() {
@@ -100,10 +133,14 @@ class CountryGuessingGame {
             return; // Just return, no feedback needed
         }
 
+        console.log('User answer:', userAnswer);
+
         // Check if answer is correct
         if (this.isCorrectAnswer(userAnswer)) {
+            console.log('Correct answer detected!');
             this.handleCorrectAnswer();
         } else {
+            console.log('Wrong answer, checking if valid country...');
             this.handleWrongAnswer(userAnswer);
         }
 
@@ -113,7 +150,9 @@ class CountryGuessingGame {
 
     isCorrectAnswer(answer) {
         const correctAnswers = [this.correctAnswer, ...this.alternativeAnswers];
-        return correctAnswers.includes(answer);
+        const isCorrect = correctAnswers.includes(answer);
+        console.log('Checking answer:', answer, 'against:', correctAnswers, 'Result:', isCorrect);
+        return isCorrect;
     }
 
     handleCorrectAnswer() {
@@ -146,18 +185,24 @@ class CountryGuessingGame {
     }
 
     handleWrongAnswer(answer) {
+        console.log('Processing wrong answer:', answer);
+
         this.wrongAttempts++;
 
         // Check if answer is in valid countries list
         if (!this.validCountries.includes(answer)) {
             // Invalid country, don't count as wrong attempt, show feedback
             this.wrongAttempts--;
+            console.log('Country not recognized:', answer);
             this.showFeedback('Country not recognized.', true);
             return;
         }
 
+        console.log('Valid country but wrong answer. Wrong attempts:', this.wrongAttempts);
+
         // Check for game over after 4 errors
         if (this.wrongAttempts >= this.maxErrors) {
+            console.log('Game over - too many wrong attempts');
             this.handleGameOver();
             return;
         }
@@ -171,11 +216,18 @@ class CountryGuessingGame {
         // Reveal the next hint based on number of wrong attempts
         // wrongAttempts = 1 -> reveal hint-2, wrongAttempts = 2 -> reveal hint-3, etc.
         const nextHintIndex = this.wrongAttempts + 1;
+        console.log('Revealing hint', nextHintIndex, 'after', this.wrongAttempts, 'wrong attempts');
+
         if (nextHintIndex <= this.maxHints) {
             const hintElement = document.getElementById(`hint-${nextHintIndex}`);
             if (hintElement) {
                 hintElement.classList.add('revealed');
+                console.log('Hint', nextHintIndex, 'revealed successfully');
+            } else {
+                console.log('Hint element not found:', `hint-${nextHintIndex}`);
             }
+        } else {
+            console.log('No more hints to reveal');
         }
     }
 
@@ -222,7 +274,46 @@ class CountryGuessingGame {
         }
     }
 
-    resetGame() {
+    async resetGame() {
+        console.log('Resetting game and getting new country...');
+
+        try {
+            // Fetch new game data from backend
+            const response = await fetch('/new-game');
+            const newGameData = await response.json();
+
+            console.log('New game data:', newGameData);
+
+            // Update game state with new country
+            this.validCountries = newGameData.valid_countries ?
+                newGameData.valid_countries.map(country => country.toLowerCase()) :
+                this.staticValidCountries;
+            this.correctAnswer = (newGameData.country || 'iran').toLowerCase();
+            this.alternativeAnswers = this.getAlternativeAnswers(this.correctAnswer);
+
+            console.log('New correct answer:', this.correctAnswer);
+            console.log('New alternative answers:', this.alternativeAnswers);
+
+            // Update hints in the DOM
+            if (newGameData.hints && newGameData.hints.length > 0) {
+                for (let i = 0; i < this.maxHints; i++) {
+                    const hintElement = document.getElementById(`hint-${i + 1}`);
+                    if (hintElement) {
+                        if (i < newGameData.hints.length) {
+                            hintElement.textContent = newGameData.hints[i];
+                        } else {
+                            hintElement.textContent = 'No more hints available';
+                        }
+                    }
+                }
+            }
+
+        } catch (error) {
+            console.error('Error fetching new game data:', error);
+            // Continue with reset even if fetch fails
+        }
+
+        // Reset game state
         this.wrongAttempts = 0;
         this.gameWon = false;
         this.gameOver = false;
