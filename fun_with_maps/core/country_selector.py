@@ -10,9 +10,9 @@ try:
     import tkinter as tk
     from tkinter import messagebox, ttk
 except Exception:  # pragma: no cover - optional dependency
-    tk = None
-    messagebox = None
-    ttk = None
+    tk = None  # type: ignore
+    messagebox = None  # type: ignore
+    ttk = None  # type: ignore\
 from typing import List, Optional
 
 
@@ -41,6 +41,9 @@ class CountrySelector:
         Returns:
             Selected country name or None if cancelled
         """
+        if tk is None:
+            return _command_line_country_selector(self.countries)
+
         self.root = tk.Tk()
         self.root.title(self.title)
         self.root.geometry("400x300")
