@@ -39,6 +39,8 @@ dependencies = [
     "click>=8.0.0",
     "pygame>=2.0.0",
     "ortools>=9.0.0",
+    "fastapi>=0.110.0",
+    "uvicorn>=0.24.0",
     "scipy==1.15.3",
 ]
 dynamic = ["version"]

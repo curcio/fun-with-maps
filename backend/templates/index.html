@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Echo Form</title>
+</head>
+<body>
+    <h1>Echo Form</h1>
+    <form action="/submit" method="post">
+        <input type="text" name="text" />
+        <button type="submit">Submit</button>
+    </form>
+    {% if submitted %}
+    <p>You submitted: {{ submitted }}</p>
+    {% endif %}
+</body>
+</html>
