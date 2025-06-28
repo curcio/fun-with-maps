@@ -39,6 +39,24 @@ pip install -e ".[dev]"
 pre-commit install
 ```
 
+### Installing with uv
+
+[uv](https://github.com/astral-sh/uv) is a drop-in replacement for `pip` that
+speeds up dependency installation. Once `uv` itself is installed you can install
+the project requirements with:
+
+```bash
+pip install uv  # one-time installation
+./scripts/install_with_uv.sh
+```
+
+For development dependencies use:
+
+```bash
+./scripts/install_with_uv.sh -e .[dev]
+pre-commit install
+```
+
 ## Quick Start
 
 ### Using the Command Line Interface
@@ -66,7 +84,7 @@ fun-with-maps-cli get-admin1-capitals "Argentina"
 ```python
 from fun_with_maps import fetch_world_map, get_country_polygon, generate_random_points_in_polygon
 
-# Fetch world map data
+# Fetch world map data (1:10m scale by default)
 world_map = fetch_world_map()
 
 # Get a specific country

@@ -1,12 +1,15 @@
+import os
+import sys
 from unittest.mock import patch
 
 import geopandas as gpd
 import pytest
-import sys
-import os
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from examples.examples import example_closest_country_analysis, run_comprehensive_demo
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))  # noqa: E402
+from examples.examples import (  # noqa: E402
+    example_closest_country_analysis,
+    run_comprehensive_demo,
+)
 
 
 class TestExampleFunctions:
@@ -180,7 +183,10 @@ class TestExampleFunctions:
     def test_examples_importable(self):
         """Test that example functions can be imported without errors."""
         # This test verifies that the imports work correctly
-        from examples.examples import example_closest_country_analysis, run_comprehensive_demo
+        from examples.examples import (
+            example_closest_country_analysis,
+            run_comprehensive_demo,
+        )
 
         # Verify functions are callable
         assert callable(example_closest_country_analysis)
