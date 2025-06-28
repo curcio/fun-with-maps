@@ -12,7 +12,7 @@ try:
 except Exception:  # pragma: no cover - optional dependency
     tk = None  # type: ignore
     messagebox = None  # type: ignore
-    ttk = None  # type: ignore
+    ttk = None  # type: ignore\
 from typing import List, Optional
 
 
