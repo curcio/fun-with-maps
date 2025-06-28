@@ -1,5 +1,6 @@
 import geopandas as gpd
 from shapely.geometry import Point, Polygon
+from unittest.mock import patch
 
 from fun_with_maps.core.point_generation import generate_random_points_in_polygon
 
@@ -55,6 +56,19 @@ class TestGenerateRandomPointsInPolygon:
         polygon_geom = sample_country.iloc[0].geometry
         for _, row in result.iterrows():
             assert polygon_geom.contains(row.geometry)
+
+    def test_triangulation_uses_polygon_geometry(self, sample_country):
+        """Ensure triangulation is called with a polygon geometry object."""
+        with patch("shapely.ops.triangulate") as mock_triangulate:
+            mock_triangulate.return_value = [sample_country.iloc[0].geometry]
+
+            generate_random_points_in_polygon(
+                sample_country, 1, method="triangulation"
+            )
+
+            assert mock_triangulate.called
+            arg = mock_triangulate.call_args[0][0]
+            assert hasattr(arg, "geom_type")
 
     def test_generate_points_invalid_method(self, sample_country):
         """Test with invalid method parameter."""
