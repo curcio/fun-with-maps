@@ -3,16 +3,17 @@ from unittest.mock import patch
 import geopandas as gpd
 from click.testing import CliRunner
 
-from fun_with_maps.cli import cli
+from fun_with_maps.cli import cli as fun_cli
+from scripts.cli import cli as script_cli
 
 
-def run_cli(args):
+def run_cli(cli_obj, args):
     runner = CliRunner()
-    return runner.invoke(cli, args)
+    return runner.invoke(cli_obj, args)
 
 
 def test_cli_help_runs():
-    result = run_cli(["--help"])
+    result = run_cli(fun_cli, ["--help"])
     assert result.exit_code == 0
     assert "Geographic data CLI tool" in result.output
 
@@ -21,7 +22,7 @@ def test_cli_help_runs():
 def test_fetch_world_map_command(mock_fetch, tmp_path):
     mock_fetch.return_value = gpd.GeoDataFrame({"geometry": []})
     output = tmp_path / "map.geojson"
-    result = run_cli(["fetch-world-map", "--output", str(output)])
+    result = run_cli(fun_cli, ["fetch-world-map", "--output", str(output)])
     assert result.exit_code == 0
     mock_fetch.assert_called_once()
     assert output.exists() or "Failed" not in result.output
@@ -31,7 +32,7 @@ def test_list_countries_command(mock_world_data):
     runner = CliRunner()
     with patch("scripts.cli.fetch_world_map") as mock_fetch:
         mock_fetch.return_value = mock_world_data
-        result = runner.invoke(cli, ["list-countries"])
+        result = runner.invoke(script_cli, ["list-countries"])
         assert result.exit_code == 0
         for country in mock_world_data["NAME"]:
             assert country in result.output
@@ -49,7 +50,9 @@ def test_closest_countries_command(mock_world_data):
         mock_get_polygon.return_value = mock_polygon
         mock_find.return_value = [("A", 0.0), ("B", 1.0), ("C", 2.0)]
 
-        result = runner.invoke(cli, ["closest-countries", "TestCountryA", "--n", "2"])
+        result = runner.invoke(
+            script_cli, ["closest-countries", "TestCountryA", "--n", "2"]
+        )
         assert result.exit_code == 0
         assert "B" in result.output
         assert "C" in result.output
