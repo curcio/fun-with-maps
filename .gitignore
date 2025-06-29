@@ -67,3 +67,4 @@ ENV/
 *.log
 files_to_delete.log
 frontend/node_modules/
+frontend/test-results/
