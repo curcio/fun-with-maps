@@ -1,8 +1,8 @@
 import random
 from pathlib import Path
 
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi import FastAPI
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -175,23 +175,13 @@ def choose_country():
 
 
 @app.get("/", response_class=HTMLResponse)
-async def read_index(request: Request):
-    country, hints, image_path = choose_country()
-    game_data = {"country": country, "valid_countries": available_countries}
-    return templates.TemplateResponse(
-        "index.html",
-        {
-            "request": request,
-            "country": country,
-            "hints": hints,
-            "valid_countries": available_countries,
-            "game_data": game_data,
-            "image_path": image_path,
-        },
-    )
+async def read_index():
+    """Serve the static index page."""
+    index_file = BASE_DIR / "static" / "index.html"
+    return FileResponse(index_file)
 
 
-@app.get("/new-game")
+@app.get("/api/new-game")
 async def new_game():
     """Get a new random country and hints for a fresh game."""
     country, hints, image_path = choose_country()
