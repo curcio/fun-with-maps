@@ -10,7 +10,7 @@ export default function Game() {
   const [won, setWon] = useState(false);
 
   useEffect(() => {
-    fetch('/new-game')
+    fetch('/api/new-game')
       .then((r) => r.json())
       .then((data) => {
         setCountry(data.country);

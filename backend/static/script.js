@@ -279,7 +279,7 @@ class CountryGuessingGame {
 
         try {
             // Fetch new game data from backend
-            const response = await fetch('/new-game');
+            const response = await fetch('/api/new-game');
             const newGameData = await response.json();
 
             console.log('New game data:', newGameData);
@@ -371,7 +371,16 @@ class CountryGuessingGame {
 }
 
 // Initialize the game when the page loads
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    if (!window.GAME_DATA) {
+        try {
+            const resp = await fetch('/api/new-game');
+            window.GAME_DATA = await resp.json();
+        } catch (error) {
+            console.error('Error fetching initial game data:', error);
+            window.GAME_DATA = {};
+        }
+    }
     window.game = new CountryGuessingGame();
 });
 
