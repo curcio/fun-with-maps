@@ -66,3 +66,4 @@ ENV/
 # Logs and temporary files
 *.log
 files_to_delete.log
+frontend/node_modules/
