@@ -3,7 +3,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 
-A comprehensive, modular geospatial analysis toolkit for working with world maps, finding closest countries to points, analyzing polygons, and generating random geographic points.
+A comprehensive, modular geospatial analysis toolkit for working with world maps.
+It ships with a command line interface as well as a small FastAPI backend used by
+the included web game.
 
 ## Features
 
@@ -26,7 +28,12 @@ git clone https://github.com/your-username/fun-with-maps.git
 cd fun-with-maps
 ```
 
-2. Install the package:
+2. Install the required packages:
+```bash
+pip install -r requirements.txt
+```
+
+3. (Optional) Install the CLI in editable mode:
 ```bash
 pip install -e .
 ```
@@ -35,7 +42,8 @@ pip install -e .
 
 For development with additional tools:
 ```bash
-pip install -e ".[dev]"
+pip install -r requirements.txt -r requirements-dev.txt
+pip install -e .
 pre-commit install
 ```
 
@@ -53,7 +61,7 @@ pip install uv  # one-time installation
 For development dependencies use:
 
 ```bash
-./scripts/install_with_uv.sh -e .[dev]
+./scripts/install_with_uv.sh -r requirements-dev.txt -e .
 pre-commit install
 ```
 
@@ -79,6 +87,17 @@ fun-with-maps-cli list-countries world.geojson
 fun-with-maps-cli get-admin1-capitals "Argentina"
 ```
 
+### Running the Backend Service
+
+The project includes a small FastAPI service that powers the web game in
+`frontend/`. Start it locally with:
+
+```bash
+uvicorn backend.main:app --reload
+```
+
+Once running, open <http://localhost:8000> to play the game.
+
 ### Using as a Python Package
 
 ```python
@@ -100,10 +119,10 @@ This project includes comprehensive test coverage using pytest. To run the tests
 
 ### Install Test Dependencies
 
-Test dependencies are included in `requirements.txt`, but you can install them specifically:
+Test dependencies are listed in `requirements-dev.txt`:
 
 ```bash
-pip install pytest pytest-cov
+pip install -r requirements-dev.txt
 ```
 
 ### Run All Tests
