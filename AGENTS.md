@@ -9,6 +9,7 @@ These guidelines apply to the entire repository for Codex agents.
 - **Use pytest** for all testing.
 - **Open-source structure**: follow typical project organization and documentation.
 - **Pre-commit hooks**: ensure changes comply with pre-commit standards.
+  Install hooks with `pre-commit install` after setting up the dev requirements.
 
 ## File Management Rules
 - **NEVER delete files**. If a file should be removed, append its name to `files_to_be_deleted.txt` (one per line) for human review.
@@ -16,6 +17,12 @@ These guidelines apply to the entire repository for Codex agents.
 - Use the `debug/` directory for any debugging scripts or temporary code.
 
 ## Development Workflow
+Before starting work install dependencies using:
+```bash
+pip install -r requirements.txt -r requirements-dev.txt
+pip install -e .
+pre-commit install
+```
 ### Feature Development
 1. Implement the requested feature.
 2. Write comprehensive tests for the feature.
