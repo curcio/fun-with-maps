@@ -87,16 +87,27 @@ fun-with-maps-cli list-countries world.geojson
 fun-with-maps-cli get-admin1-capitals "Argentina"
 ```
 
-### Running the Backend Service
+### Running the Backend Service with Docker
 
-The project includes a small FastAPI service that powers the web game in
-`frontend/`. Start it locally with:
+The repository ships with a `Dockerfile` and a simple `docker-compose.yml`
+configuration. These run the FastAPI server automatically so you don't need to
+invoke `uvicorn` yourself. Start the service with:
 
 ```bash
-uvicorn backend.main:app --reload
+docker-compose up --build
 ```
 
-Once running, open <http://localhost:8000> to play the game.
+This builds the image (if necessary) and launches the web game at
+<http://localhost:8000>.
+
+If you prefer plain Docker, you can achieve the same result with:
+
+```bash
+docker build -t fun-with-maps .
+docker run -p 8000:8000 fun-with-maps
+```
+
+Open the URL above to play the game.
 
 ### Using as a Python Package
 
